@@ -1,0 +1,14 @@
+{
+  "name": "redis-monitor",
+  "version": "1.0.0",
+  "description": "Project to monitoring some redis keys",
+  "main": "app.js",
+  "repository": "https://github.com/edmBernard/redis-monitor",
+  "author": "Erwan BERNARD <bernard.erwan@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.2",
+    "redis": "^2.8.0",
+    "socketio": "^1.0.0"
+  }
+}
