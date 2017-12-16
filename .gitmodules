@@ -1,3 +1,6 @@
 [submodule "modules/cxxopts"]
 	path = modules/cxxopts
 	url = https://github.com/jarro2783/cxxopts.git
+[submodule "modules/cpp_redis"]
+	path = modules/cpp_redis
+	url = https://github.com/Cylix/cpp_redis.git
