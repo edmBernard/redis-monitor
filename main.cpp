@@ -26,8 +26,12 @@ int main(int argc, char *argv[])
         
         options.add_options()
             ("help", "Print help")
-            ("h, host", "redis server hostname including port number", 
-                cxxopts::value<std::string>()->default_value("localhost:6379"), "HOST")
+            ("h, host", "redis server hostname", 
+                cxxopts::value<std::string>()->default_value("localhost"), "HOST")
+            ("p, port", "redis server port", 
+                cxxopts::value<int>()->default_value("6379"), "PORT")
+            ("a, auth", "redis server authentification", 
+                cxxopts::value<std::string>()->default_value(""), "AUTH")
             ("k, key", "Keys to monitor", cxxopts::value<std::vector<std::string>>(), "KEYS")
         ;
 
@@ -40,6 +44,16 @@ int main(int argc, char *argv[])
             std::cout << "Host = " << result["host"].as<std::string>() << std::endl;
         }
 
+        if (result.count("port"))
+        {
+            std::cout << "Port = " << result["port"].as<int>() << std::endl;
+        }
+
+        if (result.count("auth"))
+        {
+            std::cout << "Auth = " << result["auth"].as<std::string>() << std::endl;
+        }
+
         if (result.count("key"))
         {
             std::cout << "Key = {";
@@ -49,6 +63,17 @@ int main(int argc, char *argv[])
             }
             std::cout << "}" << std::endl;
         }
+
+        // Redis connection 
+        cpp_redis::client client;
+
+        client.connect(result["host"].as<std::string>(), result["port"].as<int>(), [](const std::string& host, std::size_t port, cpp_redis::client::connect_state status) {
+            if (status == cpp_redis::client::connect_state::dropped) {
+            std::cout << "client disconnected from " << host << ":" << port << std::endl;
+            }
+        });
+
+        client.sync_commit();
 
     } catch (const cxxopts::OptionException& e)
     {
