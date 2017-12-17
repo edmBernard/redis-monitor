@@ -4,3 +4,6 @@
 [submodule "modules/cpp_redis"]
 	path = modules/cpp_redis
 	url = https://github.com/Cylix/cpp_redis.git
+[submodule "modules/uWebSockets"]
+	path = modules/uWebSockets
+	url = https://github.com/uNetworking/uWebSockets.git
