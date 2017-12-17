@@ -17,7 +17,10 @@
 #include <cxxopts.hpp>
 #include <cpp_redis/cpp_redis>
 #include <uWS.h>
+#include "json.hpp"
+#include "inja.hpp"
 
+using json = nlohmann::json;
 
 std::stringstream indexHtml;
 

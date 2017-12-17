@@ -35,6 +35,14 @@ add_custom_target(
   DEPENDS ${UWEBSOCKET_LIBS}
 )
 
+# json deps
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/json EXCLUDE_FROM_ALL)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/json/src)
+
+# inja deps
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/inja EXCLUDE_FROM_ALL)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/inja/src)
+
 #**************************************************************************************************
 # Include **************************************************************************************************
 include_directories(${OpenCV_INCLUDE_DIRS}) 
