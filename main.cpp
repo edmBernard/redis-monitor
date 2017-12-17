@@ -10,10 +10,16 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 #include <cxxopts.hpp>
 #include <cpp_redis/cpp_redis>
 #include <uWS.h>
+
+
+std::stringstream indexHtml;
 
 int main(int argc, char *argv[])
 {
@@ -75,6 +81,33 @@ int main(int argc, char *argv[])
         });
 
         client.sync_commit();
+
+        uWS::Hub h;
+
+        indexHtml << std::ifstream("views/index.html").rdbuf();
+        if (!indexHtml.str().length()) {
+            std::cerr << "Failed to load index.html" << std::endl;
+            return -1;
+        }
+
+        h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+            if (req.getUrl().valueLength == 1) {
+                res->end(indexHtml.str().data(), indexHtml.str().length());
+            } else {
+                // i guess this should be done more gracefully?
+                res->end(nullptr, 0);
+            }
+        });
+
+        h.getDefaultGroup<uWS::SERVER>().startAutoPing(30000);
+        if (h.listen(3000)) {
+            std::cout << "Listening to port 3000" << std::endl;
+        } else {
+            std::cerr << "Failed to listen to port" << std::endl;
+            return -1;
+        }
+
+        h.run();
 
     } catch (const cxxopts::OptionException& e)
     {
