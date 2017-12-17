@@ -14,9 +14,29 @@
 </head>
 
 <body>
-    <div id="chart"></div>
+    <section class="section">
+        <div class="container">
+            <div class="columns is-desktop">
+                <div class="column ">
+                    <div id="chart1"></div>
+                </div>
+                <div class="column">
+                    <div id="chart2"></div>
+                </div>
+            </div>
+            <div class="columns is-desktop">
+                <div class="column">
+                    <div id="chart3"></div>
+                </div>
+                <div class="column">
+                    <div id="chart4"></div>
+                </div>
+            </div>             
+        </div>
+    </section>
     <script>
         var chart = c3.generate({
+            bindto: d3.select('#chart1'),
             data: {
                 x: 'x',
                 columns: [
@@ -34,14 +54,66 @@
                 }
             }
         });
-        
-        setTimeout(function () {
-            chart.load({
+
+        var chart = c3.generate({
+            bindto: d3.select('#chart2'),
+            data: {
+                x: 'x',
                 columns: [
-                    ['data3', 400, 500, 450, 700, 600, 500]
+                    ['x', '2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04', '2013-01-05', '2013-01-06'],
+                    ['data1', 30, 200, 100, 400, 150, 250],
+                    ['data2', 130, 340, 200, 500, 250, 350]
                 ]
-            });
-        }, 1000);
+            },
+            axis: {
+                x: {
+                    type: 'timeseries',
+                    tick: {
+                        format: '%Y-%m-%d'
+                    }
+                }
+            }
+        });
+
+        var chart = c3.generate({
+            bindto: d3.select('#chart3'),
+            data: {
+                x: 'x',
+                columns: [
+                    ['x', '2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04', '2013-01-05', '2013-01-06'],
+                    ['data1', 30, 200, 100, 400, 150, 250],
+                    ['data2', 130, 340, 200, 500, 250, 350]
+                ]
+            },
+            axis: {
+                x: {
+                    type: 'timeseries',
+                    tick: {
+                        format: '%Y-%m-%d'
+                    }
+                }
+            }
+        });
+
+        var chart = c3.generate({
+            bindto: d3.select('#chart4'),
+            data: {
+                x: 'x',
+                columns: [
+                    ['x', '2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04', '2013-01-05', '2013-01-06'],
+                    ['data1', 30, 200, 100, 400, 150, 250],
+                    ['data2', 130, 340, 200, 500, 250, 350]
+                ]
+            },
+            axis: {
+                x: {
+                    type: 'timeseries',
+                    tick: {
+                        format: '%Y-%m-%d'
+                    }
+                }
+            }
+        });
     </script>
 </body>
 
