@@ -13,6 +13,7 @@
 
 #include <cxxopts.hpp>
 #include <cpp_redis/cpp_redis>
+#include <uWS.h>
 
 int main(int argc, char *argv[])
 {

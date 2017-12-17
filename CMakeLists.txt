@@ -12,11 +12,16 @@ MESSAGE( " *** OpenCV_INCLUDE_DIRS : " ${OpenCV_INCLUDE_DIRS} )
 MESSAGE( " *** OpenCV_LIB_DIRS : " ${OpenCV_LIB_DIRS} ) 
 MESSAGE( " *** OpenCV_LIBS : " ${OpenCV_LIBS} )
 
+# cxxopt deps
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/cxxopts)
 
+# cpp_redis deps
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/includes)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/tacopie/includes)
+
+# uwebsocket deps
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/uWebSockets/src)
 
 #**************************************************************************************************
 # Include **************************************************************************************************
