@@ -13,10 +13,10 @@ MESSAGE( " *** OpenCV_LIB_DIRS : " ${OpenCV_LIB_DIRS} )
 MESSAGE( " *** OpenCV_LIBS : " ${OpenCV_LIBS} )
 
 # cxxopt deps
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/cxxopts)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/cxxopts EXCLUDE_FROM_ALL)
 
 # cpp_redis deps
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis EXCLUDE_FROM_ALL)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/includes)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/tacopie/includes)
 
