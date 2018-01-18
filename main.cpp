@@ -23,11 +23,13 @@
 using json = nlohmann::json;
 
 std::stringstream indexHtml;
+inja::Environment env = inja::Environment("templates/");
 
 int main(int argc, char *argv[])
 {
     try
     {
+        // =================================================================================================
         // Parse command line options
         cxxopts::Options options(argv[0], "A simple monitoring for redis database");
         options
@@ -74,6 +76,7 @@ int main(int argc, char *argv[])
             std::cout << "}" << std::endl;
         }
 
+        // =================================================================================================
         // Redis connection 
         cpp_redis::client client;
 
@@ -93,15 +96,27 @@ int main(int argc, char *argv[])
 
         uWS::Hub h;
 
-        indexHtml << std::ifstream("views/index.html").rdbuf();
-        if (!indexHtml.str().length()) {
-            std::cerr << "Failed to load index.html" << std::endl;
-            return -1;
-        }
+        // =================================================================================================
+        // Inja Template
+        env.setElementNotation(inja::ElementNotation::Dot); // e.g. time.start
 
         h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
-            if (req.getUrl().valueLength == 1) {
-                res->end(indexHtml.str().data(), indexHtml.str().length());
+            std::cout << "req.getUrl() :" << req.getUrl().toString() << std::endl;
+            if (req.getUrl().toString() == "/") {
+                json parameters;
+                parameters["name"] = "world";
+                inja::Template temp = env.parse_template("./index.html.tpl");
+                std::string rendered = temp.render(parameters); // "Hello World!"
+                res->end(rendered.data(), rendered.length());
+            } else if (req.getUrl().toString() == "/update") {
+                std::string rendered = "Hello world";
+                res->end(rendered.data(), rendered.length());
+            } else if (req.getUrl().valueLength == 1) {
+                json parameters;
+                parameters["name"] = "world";
+                inja::Template temp = env.parse_template("./index.html.tpl");
+                std::string rendered = temp.render(parameters); // "Hello World!"
+                res->end(rendered.data(), rendered.length());
             } else {
                 // i guess this should be done more gracefully?
                 res->end(nullptr, 0);
