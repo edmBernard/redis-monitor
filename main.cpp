@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
             client.auth(result["host"].as<std::string>());
         }
 
-        client.set("hello", 42);
+        client.set("hello", "42");
 
         client.sync_commit();
 
