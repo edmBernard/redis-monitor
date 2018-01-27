@@ -26,6 +26,28 @@ using json = nlohmann::json;
 std::stringstream indexHtml;
 inja::Environment env = inja::Environment("templates/");
 
+void checkRedisKeyLength(std::string redis_host, int redis_port, std::string redis_auth, std::vector<std::string> keys) {
+    cpp_redis::client client;
+
+    client.connect(redis_host, redis_port, [](const std::string& host, std::size_t port, cpp_redis::client::connect_state status) {
+        if (status == cpp_redis::client::connect_state::dropped) {
+            std::cout << "client disconnected from " << host << ":" << port << std::endl;
+        }
+    });
+
+    client.auth(redis_host);
+
+    while (true) {
+        sleep(1);
+        for (const auto& key: keys) {
+            client.llen(key, [](cpp_redis::reply& reply) {
+                std::cout << "client.llen(key) :" << reply << std::endl;
+            });
+        }
+        client.sync_commit();
+    }
+}
+
 int main(int argc, char *argv[])
 {
     try
@@ -68,22 +90,9 @@ int main(int argc, char *argv[])
         }
 
         // =================================================================================================
-        // Redis connection 
-        cpp_redis::client client;
-
-        client.connect(result["host"].as<std::string>(), result["port"].as<int>(), [](const std::string& host, std::size_t port, cpp_redis::client::connect_state status) {
-            if (status == cpp_redis::client::connect_state::dropped) {
-            std::cout << "client disconnected from " << host << ":" << port << std::endl;
-            }
-        });
-
-        client.auth(result["host"].as<std::string>());
-
-        client.set("hello", "42");
-
-        client.sync_commit();
-
-        uWS::Hub h;
+        // Listen Redis keys
+        // Spawn thread to listen redis periodically
+        std::thread checkingKey(checkRedisKeyLength, result["host"].as<std::string>(), result["port"].as<int>(), result["auth"].as<std::string>(), keys_list);
 
         // =================================================================================================
         // Inja Template
@@ -95,6 +104,7 @@ int main(int argc, char *argv[])
 
         // =================================================================================================
         // Web Server
+        uWS::Hub h;
         h.onHttpRequest([rendered](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
             std::cout << "req.getUrl() :" << req.getUrl().toString() << std::endl;
 
