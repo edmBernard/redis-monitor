@@ -22,6 +22,9 @@
 #include <uWS.h>
 #include "json.hpp"
 #include "inja.hpp"
+#include "rocksdb/db.h"
+#include "rocksdb/slice.h"
+#include "rocksdb/options.h"
 
 using json = nlohmann::json;
 
@@ -29,6 +32,7 @@ std::stringstream indexHtml;
 inja::Environment env = inja::Environment("templates/");
 std::vector<int> g_data;
 std::mutex g_data_mutex;
+std::string kDBPath = "rocksdb_simple_example";
 
 void checkRedisKeyLength(std::string redis_host, int redis_port, std::string redis_auth, std::vector<std::string> keys) {
     cpp_redis::client client;
@@ -102,6 +106,31 @@ int main(int argc, char *argv[])
         std::thread checkingKey(checkRedisKeyLength, result["host"].as<std::string>(), result["port"].as<int>(), result["auth"].as<std::string>(), keys_list);
 
         // =================================================================================================
+        // Configure RocksDB
+        rocksdb::DB* db;
+        rocksdb::Options DBOptions;
+        DBOptions.IncreaseParallelism();
+        // create the DB if it's not already present
+        DBOptions.create_if_missing = true;
+        rocksdb::Status s = rocksdb::DB::Open(DBOptions, kDBPath, &db);
+        if (!s.ok()) std::cerr << s.ToString() << std::endl;
+
+        s = db->Put(rocksdb::WriteOptions(), "fookey1", "value");
+        if (!s.ok()) std::cerr << s.ToString() << std::endl;
+        std::string value;
+
+        auto iter = rocksdb::DB::NewIterator(rocksdb::ReadOptions());
+        Slice key = "foo";
+        for (iter.Seek(prefix); iter.Valid() && iter.key().starts_with(prefix); iter.Next()) {
+            
+        }
+        // get value
+        s = db->Get(rocksdb::ReadOptions(), "key1", &value);
+        if (!s.ok()) std::cerr << s.ToString() << std::endl;
+        assert(value == "value");
+        std::cout << "value :" << value << std::endl;
+
+        // =================================================================================================
         // Inja Template
         env.setElementNotation(inja::ElementNotation::Dot);
         json parameters;
@@ -162,6 +191,8 @@ int main(int argc, char *argv[])
         }
 
         h.run();
+
+        delete db;
 
     } catch (const cxxopts::OptionException& e)
     {

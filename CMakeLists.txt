@@ -24,12 +24,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/includes)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/tacopie/includes)
 
 # rocksdb deps
-SET(ROCKSDB_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb/librocksdb.so)
+SET(ROCKSDB_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb/librocksdb.a)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb/include)
 
 add_custom_command(
   OUTPUT ${ROCKSDB_LIBS}
-  COMMAND make shared_lib
+  COMMAND make static_lib
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb
 )
 
@@ -79,4 +79,3 @@ add_executable(redis_monitor ${SOURCES})
 target_link_libraries(redis_monitor -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})
 add_dependencies(redis_monitor uwebsocket_lib rocksdb_lib)
 install(TARGETS redis_monitor DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
-
