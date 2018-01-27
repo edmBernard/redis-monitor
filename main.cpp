@@ -132,17 +132,34 @@ int main(int argc, char *argv[])
             std::cout << "iter->key() :" << iter->key().ToString() << std::endl;
             std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
         }
+
+        {
+            std::time_t t = std::time(nullptr);
+            std::tm tm = *std::localtime(&t);
+            std::stringstream ss;
+            ss << std::put_time(&tm, "%Y_%m_%d_%H%M%S");
+            std::string the_date = ss.str();
+            std::cout << "the_date :" << the_date << std::endl;
+        }
+
+        {
+            std::tm tm;
+            std::istringstream iss("16:35:12");
+            iss >> std::get_time(&tm, "%H:%M:%S"); // or just %T in this case
+            std::time_t time = mktime(&tm);
+
+            tm = *std::localtime(&time);
+            std::stringstream ss;
+            ss << std::put_time(&tm, "%Y_%m_%d_%H%M%S");
+            std::string the_date = ss.str();
+            std::cout << "the_date :" << the_date << std::endl;
+
+        }
         // prefix = "bar";
         // for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
         //     std::cout << "iter->key() :" << iter->key().ToString() << std::endl;
         //     std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
         // }
-
-        // // get value
-        // s = db->Get(rocksdb::ReadOptions(), "key1", &value);
-        // if (!s.ok()) std::cerr << s.ToString() << std::endl;
-        // assert(value == "value");
-        // std::cout << "value :" << value << std::endl;
 
         // =================================================================================================
         // Inja Template
