@@ -14,6 +14,7 @@
 #include <iostream>
 #include <sstream>
 #include <regex>
+#include <chrono>       // std::chrono::seconds
 
 #include <cxxopts.hpp>
 #include <cpp_redis/cpp_redis>
@@ -38,7 +39,7 @@ void checkRedisKeyLength(std::string redis_host, int redis_port, std::string red
     client.auth(redis_host);
 
     while (true) {
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         for (const auto& key: keys) {
             client.llen(key, [](cpp_redis::reply& reply) {
                 std::cout << "client.llen(key) :" << reply << std::endl;
