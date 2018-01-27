@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <regex>
 
 #include <cxxopts.hpp>
 #include <cpp_redis/cpp_redis>
@@ -51,29 +52,18 @@ int main(int argc, char *argv[])
 
         auto result = options.parse(argc, argv);
 
-        if (result.count("host"))
-        {
-            std::cout << "Host = " << result["host"].as<std::string>() << std::endl;
-        }
-
-        if (result.count("port"))
-        {
-            std::cout << "Port = " << result["port"].as<int>() << std::endl;
-        }
-
-        if (result.count("auth"))
-        {
-            std::cout << "Auth = " << result["auth"].as<std::string>() << std::endl;
-        }
-
+        std::cout << "Host = " << result["host"].as<std::string>() << std::endl;
+        std::cout << "Port = " << result["port"].as<int>() << std::endl;
+        std::cout << "Auth = " << result["auth"].as<std::string>() << std::endl;
+        
         if (result.count("key"))
         {
-            std::cout << "Key = {";
+            std::cout << "Key = [";
             auto& v = result["key"].as<std::vector<std::string>>();
             for (const auto& s : v) {
                 std::cout << s << ", ";
             }
-            std::cout << "}" << std::endl;
+            std::cout << "]" << std::endl;
         }
 
         // =================================================================================================
@@ -85,10 +75,8 @@ int main(int argc, char *argv[])
             std::cout << "client disconnected from " << host << ":" << port << std::endl;
             }
         });
-        if (result.count("auth"))
-        {
-            client.auth(result["host"].as<std::string>());
-        }
+
+        client.auth(result["host"].as<std::string>());
 
         client.set("hello", "42");
 
@@ -98,25 +86,46 @@ int main(int argc, char *argv[])
 
         // =================================================================================================
         // Inja Template
-        env.setElementNotation(inja::ElementNotation::Dot); // e.g. time.start
+        env.setElementNotation(inja::ElementNotation::Dot);
 
+        // =================================================================================================
+        // Web Server
         h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
             std::cout << "req.getUrl() :" << req.getUrl().toString() << std::endl;
-            if (req.getUrl().toString() == "/") {
+
+            // Temp string because regex_match don't allow versatile string get by toString
+            std::string url_temp = req.getUrl().toString();
+            // Routing
+            std::regex route_static_file("/(static/.*)");
+            std::regex route_home("/");
+            std::regex route_update("/update");
+            std::smatch pieces_match;
+
+            // Routing static file
+            if (std::regex_match(url_temp, pieces_match, route_static_file)) {
+                std::cout << "pieces_match[1].str() :" << pieces_match[1].str() << std::endl;
+                std::ifstream in(pieces_match[1].str(), std::ios::in | std::ios::binary);
+                if (in) {
+                    std::ostringstream contents;
+                    contents << in.rdbuf();
+                    in.close();
+                    res->end(contents.str().data(), contents.str().length());
+                }
+
+            // Routing home
+            } else if (std::regex_match(url_temp, pieces_match, route_home)) {
                 json parameters;
                 parameters["name"] = "world";
                 inja::Template temp = env.parse_template("./index.html.tpl");
                 std::string rendered = temp.render(parameters); // "Hello World!"
                 res->end(rendered.data(), rendered.length());
-            } else if (req.getUrl().toString() == "/update") {
+
+            // Routing update
+            } else if (std::regex_match(url_temp, pieces_match, route_update)) {
                 std::string rendered = "Hello world";
                 res->end(rendered.data(), rendered.length());
-            } else if (req.getUrl().valueLength == 1) {
-                json parameters;
-                parameters["name"] = "world";
-                inja::Template temp = env.parse_template("./index.html.tpl");
-                std::string rendered = temp.render(parameters); // "Hello World!"
-                res->end(rendered.data(), rendered.length());
+
+            // Routing Nothing
             } else {
                 // i guess this should be done more gracefully?
                 res->end(nullptr, 0);
