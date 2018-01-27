@@ -15,6 +15,7 @@
 #include <sstream>
 #include <regex>
 #include <chrono>       // std::chrono::seconds
+#include <mutex>
 
 #include <cxxopts.hpp>
 #include <cpp_redis/cpp_redis>
@@ -26,6 +27,8 @@ using json = nlohmann::json;
 
 std::stringstream indexHtml;
 inja::Environment env = inja::Environment("templates/");
+std::vector<int> g_data;
+std::mutex g_data_mutex;
 
 void checkRedisKeyLength(std::string redis_host, int redis_port, std::string redis_auth, std::vector<std::string> keys) {
     cpp_redis::client client;
@@ -43,6 +46,9 @@ void checkRedisKeyLength(std::string redis_host, int redis_port, std::string red
         for (const auto& key: keys) {
             client.llen(key, [](cpp_redis::reply& reply) {
                 std::cout << "client.llen(key) :" << reply << std::endl;
+                g_data_mutex.lock();
+                g_data.push_back(reply);
+                g_data_mutex.unlock();
             });
         }
         client.sync_commit();
@@ -133,7 +139,11 @@ int main(int argc, char *argv[])
 
             // Routing update
             } else if (std::regex_match(url_temp, pieces_match, route_update)) {
-                std::string rendered = "Hello world";
+                std::ostringstream contents;
+                for (auto&& x: g_data) {
+                    contents << x << " ";
+                }
+                std::string rendered = contents.str();
                 res->end(rendered.data(), rendered.length());
 
             // Routing Nothing
