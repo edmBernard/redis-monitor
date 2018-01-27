@@ -7,10 +7,6 @@ cmake_minimum_required(VERSION 3.5)
 
 #**************************************************************************************************
 # Find Package **************************************************************************************************
-find_package(OpenCV 3 REQUIRED) 
-MESSAGE( " *** OpenCV_INCLUDE_DIRS : " ${OpenCV_INCLUDE_DIRS} ) 
-MESSAGE( " *** OpenCV_LIB_DIRS : " ${OpenCV_LIB_DIRS} ) 
-MESSAGE( " *** OpenCV_LIBS : " ${OpenCV_LIBS} )
 
 # cxxopt deps
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/cxxopts EXCLUDE_FROM_ALL)
@@ -45,7 +41,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/inja/src)
 
 #**************************************************************************************************
 # Include **************************************************************************************************
-include_directories(${OpenCV_INCLUDE_DIRS}) 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
@@ -53,7 +48,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 #**************************************************************************************************
 # Set variable **************************************************************************************************
 SET(SOURCES
-${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
 
 #**************************************************************************************************
@@ -61,15 +56,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC")
 
 #**************************************************************************************************
-# Linker **************************************************************************************************
-LINK_DIRECTORIES(
-  ${OpenCV_LIB_DIR}
-  )
-
-#**************************************************************************************************
 # Make configuration 
 #**************************************************************************************************
 add_executable(redis_monitor ${SOURCES})
-target_link_libraries(redis_monitor -pthread -lz -luv -lssl -lcrypt ${OpenCV_LIBS} cxxopts cpp_redis ${UWEBSOCKET_LIBS})
+target_link_libraries(redis_monitor -pthread -lz -luv -lssl -lcrypt cxxopts cpp_redis ${UWEBSOCKET_LIBS})
 add_dependencies(redis_monitor uwebsocket_lib)
 install(TARGETS redis_monitor DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
