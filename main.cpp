@@ -103,7 +103,6 @@ int main(int argc, char *argv[])
 
             // Routing static file
             if (std::regex_match(url_temp, pieces_match, route_static_file)) {
-                std::cout << "pieces_match[1].str() :" << pieces_match[1].str() << std::endl;
                 std::ifstream in(pieces_match[1].str(), std::ios::in | std::ios::binary);
                 if (in) {
                     std::ostringstream contents;

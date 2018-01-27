@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <link rel="icon" type="image/png" href="static/static/line-chart.png"/>
+    <link rel="icon" type="image/png" href="static/line-chart.png"/>
     <title>Redis Monitoring</title>
 
     <link rel="stylesheet" href="static/bulma.min.css">
