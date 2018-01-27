@@ -25,6 +25,8 @@
 #include "rocksdb/db.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/options.h"
+#include "rocksdb/slice_transform.h"
+
 
 using json = nlohmann::json;
 
@@ -32,7 +34,7 @@ std::stringstream indexHtml;
 inja::Environment env = inja::Environment("templates/");
 std::vector<int> g_data;
 std::mutex g_data_mutex;
-std::string kDBPath = "rocksdb_simple_example";
+std::string kDBPath = "/tmp/redis_monitor";
 
 void checkRedisKeyLength(std::string redis_host, int redis_port, std::string redis_auth, std::vector<std::string> keys) {
     cpp_redis::client client;
@@ -110,25 +112,37 @@ int main(int argc, char *argv[])
         rocksdb::DB* db;
         rocksdb::Options DBOptions;
         DBOptions.IncreaseParallelism();
+        
+        DBOptions.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(3));
         // create the DB if it's not already present
         DBOptions.create_if_missing = true;
         rocksdb::Status s = rocksdb::DB::Open(DBOptions, kDBPath, &db);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
 
-        s = db->Put(rocksdb::WriteOptions(), "fookey1", "value");
-        if (!s.ok()) std::cerr << s.ToString() << std::endl;
-        std::string value;
+        for (int i = 0; i < 10; i++) {
+            std::cout << "value + i :" << "value" + std::to_string(i) << std::endl;
+            s = db->Put(rocksdb::WriteOptions(), "fookey" + std::to_string(i), "value" + std::to_string(i));
+            s = db->Put(rocksdb::WriteOptions(), "barkey" + std::to_string(i), "value" + std::to_string(i));
+            if (!s.ok()) std::cerr << s.ToString() << std::endl;
+        }    
 
-        auto iter = rocksdb::DB::NewIterator(rocksdb::ReadOptions());
-        Slice key = "foo";
-        for (iter.Seek(prefix); iter.Valid() && iter.key().starts_with(prefix); iter.Next()) {
-            
+        auto iter = db->NewIterator(rocksdb::ReadOptions());
+        rocksdb::Slice prefix = "foo";
+        for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
+            std::cout << "iter->key() :" << iter->key().ToString() << std::endl;
+            std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
         }
-        // get value
-        s = db->Get(rocksdb::ReadOptions(), "key1", &value);
-        if (!s.ok()) std::cerr << s.ToString() << std::endl;
-        assert(value == "value");
-        std::cout << "value :" << value << std::endl;
+        // prefix = "bar";
+        // for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
+        //     std::cout << "iter->key() :" << iter->key().ToString() << std::endl;
+        //     std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
+        // }
+
+        // // get value
+        // s = db->Get(rocksdb::ReadOptions(), "key1", &value);
+        // if (!s.ok()) std::cerr << s.ToString() << std::endl;
+        // assert(value == "value");
+        // std::cout << "value :" << value << std::endl;
 
         // =================================================================================================
         // Inja Template
