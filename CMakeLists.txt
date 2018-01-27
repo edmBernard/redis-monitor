@@ -29,7 +29,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb/include)
 
 add_custom_command(
   OUTPUT ${ROCKSDB_LIBS}
-  COMMAND make static_lib
+  COMMAND make ROCKSDB_LITE=ON static_lib
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb
 )
 
