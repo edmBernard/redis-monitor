@@ -17,55 +17,37 @@
     <section class="section">
         <div class="container">
             <div class="columns is-desktop">
+{% for key in keys %}
                 <div class="column ">
-                    <div id="TimeseriesChart1"></div>
+                    <div id="{{key}}"></div>
                 </div>
-                <div class="column">
-                    <div id="TimeseriesChart2"></div>
-                </div>
-            </div>          
-        </div>
-    </section>
-    <script>
-        var chart = bb.generate({
-            data: {
-                x: "x",
-                columns: [
-                ["x", "2013-01-01", "2013-01-02", "2013-01-03", "2013-01-04", "2013-01-05", "2013-01-06"],
-                ["data1", 30, 200, 100, 400, 150, 250],
-                ["data2", 130, 340, 200, 500, 250, 350]
-                ]
-            },
-            axis: {
-                x: {
-                    type: "timeseries",
-                    tick: {
-                        format: "%Y-%m-%d"
-                    }
+{% endfor %}
+</div>          
+</div>
+</section>
+<script>
+{% for key in keys %}
+    var chart = bb.generate({
+        data: {
+            x: "x",
+            columns: [
+            ["x", "2013-01-01", "2013-01-02", "2013-01-03", "2013-01-04", "2013-01-05", "2013-01-06"],
+            ["data1", 30, 200, 100, 400, 150, 250],
+            ["data2", 130, 340, 200, 500, 250, 350]
+            ]
+        },
+        axis: {
+            x: {
+                type: "timeseries",
+                tick: {
+                    format: "%Y-%m-%d"
                 }
-            },
-            bindto: "#TimeseriesChart1"
-        });
-        
-        var chart = bb.generate({
-            data: {
-                x: "x",
-                columns: [
-                ["x", "2013-01-01", "2013-01-02", "2013-01-03", "2013-01-04", "2013-01-05", "2013-01-06"],
-                ["data1", 30, 200, 100, 400, 150, 250],
-                ["data2", 130, 340, 200, 500, 250, 350]
-                ]
-                },
-            axis: {
-                x: {
-                    type: "timeseries",
-                    tick: {
-                        format: "%Y-%m-%d"
-                    }
-                }
-            },
-            bindto: "#TimeseriesChart2"
-        });
+            }
+        },
+        bindto: "#{{key}}"
+    });
+{% endfor %}
+
     </script>
 </body>
 

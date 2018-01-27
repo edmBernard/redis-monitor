@@ -56,12 +56,13 @@ int main(int argc, char *argv[])
         std::cout << "Port = " << result["port"].as<int>() << std::endl;
         std::cout << "Auth = " << result["auth"].as<std::string>() << std::endl;
         
+        std::vector<std::string> keys_list;
         if (result.count("key"))
         {
             std::cout << "Key = [";
-            auto& v = result["key"].as<std::vector<std::string>>();
-            for (const auto& s : v) {
-                std::cout << s << ", ";
+            keys_list = result["key"].as<std::vector<std::string> >();
+            for (const auto& k : keys_list) {
+                std::cout << k << ", ";
             }
             std::cout << "]" << std::endl;
         }
@@ -87,10 +88,14 @@ int main(int argc, char *argv[])
         // =================================================================================================
         // Inja Template
         env.setElementNotation(inja::ElementNotation::Dot);
+        json parameters;
+        parameters["keys"] = keys_list;
+        inja::Template temp = env.parse_template("./index.html.tpl");
+        std::string rendered = temp.render(parameters);
 
         // =================================================================================================
         // Web Server
-        h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+        h.onHttpRequest([rendered](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
             std::cout << "req.getUrl() :" << req.getUrl().toString() << std::endl;
 
             // Temp string because regex_match don't allow versatile string get by toString
@@ -113,10 +118,6 @@ int main(int argc, char *argv[])
 
             // Routing home
             } else if (std::regex_match(url_temp, pieces_match, route_home)) {
-                json parameters;
-                parameters["name"] = "world";
-                inja::Template temp = env.parse_template("./index.html.tpl");
-                std::string rendered = temp.render(parameters); // "Hello World!"
                 res->end(rendered.data(), rendered.length());
 
             // Routing update
