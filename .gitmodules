@@ -13,3 +13,6 @@
 [submodule "modules/json"]
 	path = modules/json
 	url = https://github.com/nlohmann/json.git
+[submodule "modules/rocksdb"]
+	path = modules/rocksdb
+	url = https://github.com/facebook/rocksdb.git
