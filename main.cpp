@@ -177,6 +177,9 @@ int main(int argc, char *argv[])
             // Routing update
             } else if (std::regex_match(url_temp, pieces_match, route_update)) {
 
+                json abscisse = json::array();
+                json ordinate = json::array();
+
                 auto iter = db->NewIterator(rocksdb::ReadOptions());
 
                 for (unsigned int i = 0; i < keys.size(); ++i) {
@@ -186,16 +189,19 @@ int main(int argc, char *argv[])
 
                     for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
                         std::string tmp = iter->key().ToString();
-                        std::cout << "iter->key() :" << tmp.substr(3, tmp.size()) << std::endl;
-                        std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
+                        abscisse.push_back(tmp.substr(3, tmp.size()));
+                        ordinate.push_back(iter->value().ToString());
+                        // std::cout << "iter->key() :" << tmp.substr(3, tmp.size()) << std::endl;
+                        // std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
                     }
                 }
-                std::ostringstream contents;
-                for (auto&& x: g_data) {
-                    contents << x << " ";
-                }
-                std::string rendered = contents.str();
-                res->end(rendered.data(), rendered.length());
+
+                json data;
+                data["abscisse"] = abscisse;
+                data["ordinate"] = ordinate;
+
+                std::string data_string = data.dump(4);
+                res->end(data_string.data(), data_string.length());
 
             // Routing Nothing
             } else {
