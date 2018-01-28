@@ -50,21 +50,13 @@ std::string convertTimeToStr(std::time_t time) {
     return ss.str();
 }
 
-void checkRedisKeyLength(std::string redis_host, int redis_port, std::string redis_auth, std::vector<std::string> keys, rocksdb::DB* db) {
-    cpp_redis::client client;
-
-    client.connect(redis_host, redis_port, [](const std::string& host, std::size_t port, cpp_redis::client::connect_state status) {
-        if (status == cpp_redis::client::connect_state::dropped) {
-            std::cout << "client disconnected from " << host << ":" << port << std::endl;
-        }
-    });
-
-    client.auth(redis_host);
+void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> keys, rocksdb::DB* db) {
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         for (unsigned int i = 0; i < keys.size(); ++i) {
-            client.llen(keys[i], [i, db](cpp_redis::reply& reply) {
+            std::cout << "debug2" << std::endl; 
+            client->llen(keys[i], [i, db](cpp_redis::reply& reply) {
                 g_data_mutex.lock();
                 g_data.push_back(reply);
 
@@ -75,7 +67,7 @@ void checkRedisKeyLength(std::string redis_host, int redis_port, std::string red
                 g_data_mutex.unlock();
             });
         }
-        client.sync_commit();
+        client->sync_commit();
     }
 }
 
@@ -120,10 +112,9 @@ int main(int argc, char *argv[])
             std::cout << "]" << std::endl;
         }
 
-
         // =================================================================================================
         // Configure RocksDB
-        rocksdb::DB* db;
+        rocksdb::DB *db;
         rocksdb::Options DBOptions;
         DBOptions.IncreaseParallelism();
         
@@ -135,8 +126,18 @@ int main(int argc, char *argv[])
 
         // =================================================================================================
         // Listen Redis keys
+        cpp_redis::client *client = new cpp_redis::client();
+
+        client->connect(result["host"].as<std::string>(), result["port"].as<int>(), [](const std::string& host, std::size_t port, cpp_redis::client::connect_state status) {
+            if (status == cpp_redis::client::connect_state::dropped) {
+                std::cout << "client disconnected from " << host << ":" << port << std::endl;
+            }
+        });
+
+        client->auth(result["auth"].as<std::string>());
+
         // Spawn thread to listen redis periodically
-        std::thread checkingKey(checkRedisKeyLength, result["host"].as<std::string>(), result["port"].as<int>(), result["auth"].as<std::string>(), keys, db);
+        std::thread checkingKey(checkRedisKeyLength, client, keys, db);
 
         // =================================================================================================
         // Inja Template
@@ -218,6 +219,7 @@ int main(int argc, char *argv[])
         h.run();
 
         delete db;
+        delete client;
 
     } catch (const cxxopts::OptionException& e)
     {
