@@ -34,7 +34,6 @@ std::stringstream indexHtml;
 inja::Environment env = inja::Environment("templates/");
 std::vector<int> g_data;
 std::mutex g_data_mutex;
-std::string kDBPath = "/tmp/redis_monitor";
 
 std::time_t convertStrToTime(std::string stime) {
     std::tm tm;
@@ -87,10 +86,12 @@ int main(int argc, char *argv[])
                 cxxopts::value<std::string>()->default_value("localhost"), "HOST")
             ("p, port", "redis server port", 
                 cxxopts::value<int>()->default_value("6379"), "PORT")
-            ("update-rate", "update rate in second", 
-                cxxopts::value<int>()->default_value("1"), "RATE")
             ("a, auth", "redis server authentification", 
                 cxxopts::value<std::string>()->default_value(""), "AUTH")
+            ("rocksdb-path", "path for rocksdb", 
+                cxxopts::value<std::string>()->default_value("/tmp/redis_monitor"), "PATH")
+            ("update-rate", "update rate in second", 
+                cxxopts::value<int>()->default_value("1"), "RATE")
             ("k, key", "Keys to monitor", cxxopts::value<std::vector<std::string>>(), "KEYS")
         ;
 
@@ -107,6 +108,7 @@ int main(int argc, char *argv[])
         std::cout << "port = " << result["port"].as<int>() << std::endl;
         std::cout << "auth = " << result["auth"].as<std::string>() << std::endl;
         std::cout << "update-rate = " << result["update-rate"].as<int>() << std::endl;
+        std::cout << "rocksdb-path = " << result["rocksdb-path"].as<std::string>() << std::endl;
         
         std::vector<std::string> keys;
         if (result.count("key"))
@@ -128,6 +130,7 @@ int main(int argc, char *argv[])
         DBOptions.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(3));
         // create the DB if it's not already present
         DBOptions.create_if_missing = true;
+        std::string kDBPath = result["rocksdb-path"].as<std::string>();
         rocksdb::Status s = rocksdb::DB::Open(DBOptions, kDBPath, &db);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
 
