@@ -16,11 +16,14 @@
 <body>
     <section class="section">
         <div class="container">
-            <div class="columns is-desktop">
-                <div class="column ">
-                    <div id="keysLength"></div>
-                </div>
-            </div>          
+            <h1 class="title">Keys length monitoring</h1>
+                <div id="keysLength"></div>
+        </div>
+    </section>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">PubSub monitoring</h1>
+
         </div>
     </section>
 <script>
