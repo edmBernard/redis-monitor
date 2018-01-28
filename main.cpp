@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
                         ordinate.push_back(iter->value().ToString());
                     }
 
-                    temp["id"] = ss.str();
+                    temp["id"] = keys[i];
                     temp["abscisse"] = abscisse;
                     temp["ordinate"] = ordinate;
                     data.push_back(temp);
