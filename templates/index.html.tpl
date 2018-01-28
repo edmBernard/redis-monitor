@@ -35,6 +35,9 @@
             columns: [
             ]
         },
+        size: {
+            height: 400,
+        },
         axis: {
             x: {
                 label: "Time",
@@ -46,13 +49,17 @@
                 }
             },
             y: {
-                label: "keys' length"
+                label: "keys' length",
+                min: 0
             }
         },
         title: {
             text: 'Keys length monitoring'
         },
         grid: {
+            x: {
+              show: true
+            },
             y: {
               show: true
             }
