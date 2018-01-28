@@ -55,7 +55,6 @@ void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> key
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         for (unsigned int i = 0; i < keys.size(); ++i) {
-            std::cout << "debug2" << std::endl; 
             client->llen(keys[i], [i, db](cpp_redis::reply& reply) {
                 g_data_mutex.lock();
                 g_data.push_back(reply);
@@ -93,7 +92,7 @@ int main(int argc, char *argv[])
             ("k, key", "Keys to monitor", cxxopts::value<std::vector<std::string>>(), "KEYS")
         ;
 
-        options.parse_positional({"key"});
+        // options.parse_positional({"key"});
 
         auto result = options.parse(argc, argv);
 
@@ -178,11 +177,12 @@ int main(int argc, char *argv[])
             // Routing update
             } else if (std::regex_match(url_temp, pieces_match, route_update)) {
 
-                json data;
+                json data = json::array();
 
                 auto iter = db->NewIterator(rocksdb::ReadOptions());
 
                 for (unsigned int i = 0; i < keys.size(); ++i) {
+                    json temp;
                     json abscisse = json::array();
                     json ordinate = json::array();
                     std::ostringstream ss;
@@ -194,8 +194,11 @@ int main(int argc, char *argv[])
                         abscisse.push_back(tmp.substr(3, tmp.size()));
                         ordinate.push_back(iter->value().ToString());
                     }
-                    data["serie" + ss.str()]["abscisse"] = abscisse;
-                    data["serie" + ss.str()]["ordinate"] = ordinate;
+
+                    temp["id"] = ss.str();
+                    temp["abscisse"] = abscisse;
+                    temp["ordinate"] = ordinate;
+                    data.push_back(temp);
                 }
 
                 std::string data_string = data.dump();
