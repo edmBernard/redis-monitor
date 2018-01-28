@@ -94,9 +94,14 @@ int main(int argc, char *argv[])
             ("k, key", "Keys to monitor", cxxopts::value<std::vector<std::string>>(), "KEYS")
         ;
 
-        // options.parse_positional({"key"});
-
+        options.parse_positional({"key"});
+        
         auto result = options.parse(argc, argv);
+
+        if (result.count("help")) {
+            std::cout << options.help({"", "Group"}) << std::endl;
+            exit(0);
+        }
 
         std::cout << "host = " << result["host"].as<std::string>() << std::endl;
         std::cout << "port = " << result["port"].as<int>() << std::endl;
