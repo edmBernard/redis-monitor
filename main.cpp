@@ -36,6 +36,20 @@ std::vector<int> g_data;
 std::mutex g_data_mutex;
 std::string kDBPath = "/tmp/redis_monitor";
 
+std::time_t convertStrToTime(std::string stime) {
+    std::tm tm;
+    std::istringstream iss(stime);
+    iss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S"); // or just %T in this case
+    return timegm(&tm);
+}
+
+std::string convertTimeToStr(std::time_t time) {
+    std::tm tm = *std::gmtime(&time);
+    std::stringstream ss;
+    ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
+
 void checkRedisKeyLength(std::string redis_host, int redis_port, std::string redis_auth, std::vector<std::string> keys) {
     cpp_redis::client client;
 
@@ -49,11 +63,16 @@ void checkRedisKeyLength(std::string redis_host, int redis_port, std::string red
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        for (const auto& key: keys) {
-            client.llen(key, [](cpp_redis::reply& reply) {
+        for (unsigned int i = 0; i < keys.size(); ++i) {
+            client.llen(keys[i], [i](cpp_redis::reply& reply) {
                 std::cout << "client.llen(key) :" << reply << std::endl;
                 g_data_mutex.lock();
                 g_data.push_back(reply);
+
+                std::ostringstream ss;
+                ss << std::setw(3) << std::setfill('0') << i;
+                std::cout << "ss.str() :" << ss.str() << std::endl;
+
                 g_data_mutex.unlock();
             });
         }
@@ -133,33 +152,9 @@ int main(int argc, char *argv[])
             std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
         }
 
-        {
-            std::time_t t = std::time(nullptr);
-            std::tm tm = *std::localtime(&t);
-            std::stringstream ss;
-            ss << std::put_time(&tm, "%Y_%m_%d_%H%M%S");
-            std::string the_date = ss.str();
-            std::cout << "the_date :" << the_date << std::endl;
-        }
-
-        {
-            std::tm tm;
-            std::istringstream iss("16:35:12");
-            iss >> std::get_time(&tm, "%H:%M:%S"); // or just %T in this case
-            std::time_t time = mktime(&tm);
-
-            tm = *std::localtime(&time);
-            std::stringstream ss;
-            ss << std::put_time(&tm, "%Y_%m_%d_%H%M%S");
-            std::string the_date = ss.str();
-            std::cout << "the_date :" << the_date << std::endl;
-
-        }
-        // prefix = "bar";
-        // for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
-        //     std::cout << "iter->key() :" << iter->key().ToString() << std::endl;
-        //     std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
-        // }
+        std::time_t t = std::time(nullptr);
+        std::cout << "convertTimeToStr(t) :" << convertTimeToStr(t) << std::endl;
+        std::cout << "T->S->T->S: " << convertTimeToStr(convertStrToTime(convertTimeToStr(t))) << std::endl;
 
         // =================================================================================================
         // Inja Template
