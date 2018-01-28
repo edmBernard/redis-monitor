@@ -17,36 +17,70 @@
     <section class="section">
         <div class="container">
             <div class="columns is-desktop">
-{% for key in keys %}
                 <div class="column ">
-                    <div id="{{key}}"></div>
+                    <div id="keysLength"></div>
                 </div>
-{% endfor %}
-</div>          
-</div>
-</section>
+            </div>          
+        </div>
+    </section>
 <script>
-{% for key in keys %}
+
     var chart = bb.generate({
         data: {
             x: "x",
+            xFormat: '%Y-%m-%d %H:%M:%S',
             columns: [
-            ["x", "2013-01-01", "2013-01-02", "2013-01-03", "2013-01-04", "2013-01-05", "2013-01-06"],
-            ["data1", 30, 200, 100, 400, 150, 250],
-            ["data2", 130, 340, 200, 500, 250, 350]
             ]
         },
         axis: {
             x: {
+                label: "Time",
                 type: "timeseries",
                 tick: {
-                    format: "%Y-%m-%d"
+                    rotate: 45,
+                    fit: false,
+                    format: "%Y-%m-%d %H:%M:%S"
                 }
+            },
+            y: {
+                label: "keys' length"
             }
         },
-        bindto: "#{{key}}"
+        title: {
+            text: 'Keys length monitoring'
+        },
+        grid: {
+            y: {
+              show: true
+            }
+        },
+        bindto: "#keysLength"
     });
-{% endfor %}
+
+    function httpGetAsync(theUrl, callback)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() { 
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+                callback(xmlHttp.responseText);
+        }
+        xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+        xmlHttp.send(null);
+    }
+
+    httpGetAsync('/update', function(response) {
+        response = JSON.parse(response);
+        for (let i = 0; i < response.length; i++) {
+            chart.load({
+                columns: [
+                    ["x"].concat(response[i].abscisse),
+                    [response[i].id].concat(response[i].ordinate)
+                ]
+            });
+        }
+    });
+
+
 
     </script>
 </body>
