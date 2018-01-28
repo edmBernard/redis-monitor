@@ -92,10 +92,11 @@ int main(int argc, char *argv[])
                 cxxopts::value<std::string>()->default_value("/tmp/redis_monitor"), "PATH")
             ("update-rate", "update rate in second", 
                 cxxopts::value<int>()->default_value("1"), "RATE")
-            ("k, key", "Keys to monitor", cxxopts::value<std::vector<std::string>>(), "KEYS")
+            ("psubscribe", "pattern used to redis pattern subscription", 
+                cxxopts::value<std::vector<std::string>>(), "PATTERN")
+            ("k, key", "Keys to monitor", 
+                cxxopts::value<std::vector<std::string>>(), "KEYS")
         ;
-
-        options.parse_positional({"key"});
         
         auto result = options.parse(argc, argv);
 
@@ -113,10 +114,21 @@ int main(int argc, char *argv[])
         std::vector<std::string> keys;
         if (result.count("key"))
         {
-            std::cout << "key = [";
+            std::cout << "keys = [";
             keys = result["key"].as<std::vector<std::string> >();
             for (const auto& k : keys) {
                 std::cout << k << ", ";
+            }
+            std::cout << "]" << std::endl;
+        }
+
+        std::vector<std::string> patterns;
+        if (result.count("psubscribe"))
+        {
+            std::cout << "patterns = [";
+            patterns = result["psubscribe"].as<std::vector<std::string> >();
+            for (const auto& p : patterns) {
+                std::cout << p << ", ";
             }
             std::cout << "]" << std::endl;
         }
@@ -148,6 +160,27 @@ int main(int argc, char *argv[])
 
         // Spawn thread to listen redis periodically
         std::thread checkingKey(checkRedisKeyLength, client, keys, db, result["update-rate"].as<int>());
+
+        // =================================================================================================
+        // Redis subscriber
+        cpp_redis::subscriber *sub = new cpp_redis::subscriber();
+
+        sub->connect(result["host"].as<std::string>(), result["port"].as<int>(), [](const std::string& host, std::size_t port, cpp_redis::subscriber::connect_state status) {
+            if (status == cpp_redis::subscriber::connect_state::dropped) {
+                std::cout << "subscriber disconnected from " << host << ":" << port << std::endl;
+            }
+        });
+
+        sub->auth(result["auth"].as<std::string>());
+
+        for (unsigned int i = 0; i < patterns.size(); ++i) {
+            sub->psubscribe(patterns[i], [i](const std::string& chan, const std::string& msg) {
+                std::cout << "PMESSAGE " << i << ": " << chan << ": " << msg << std::endl;
+            });
+        }
+
+        sub->commit();
+
 
         // =================================================================================================
         // Inja Template
@@ -234,6 +267,7 @@ int main(int argc, char *argv[])
 
         delete db;
         delete client;
+        delete sub;
 
     } catch (const cxxopts::OptionException& e)
     {
