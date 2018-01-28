@@ -177,12 +177,13 @@ int main(int argc, char *argv[])
             // Routing update
             } else if (std::regex_match(url_temp, pieces_match, route_update)) {
 
-                json abscisse = json::array();
-                json ordinate = json::array();
+                json data;
 
                 auto iter = db->NewIterator(rocksdb::ReadOptions());
 
                 for (unsigned int i = 0; i < keys.size(); ++i) {
+                    json abscisse = json::array();
+                    json ordinate = json::array();
                     std::ostringstream ss;
                     ss << std::setw(3) << std::setfill('0') << i;
                     rocksdb::Slice prefix = ss.str();
@@ -191,16 +192,12 @@ int main(int argc, char *argv[])
                         std::string tmp = iter->key().ToString();
                         abscisse.push_back(tmp.substr(3, tmp.size()));
                         ordinate.push_back(iter->value().ToString());
-                        // std::cout << "iter->key() :" << tmp.substr(3, tmp.size()) << std::endl;
-                        // std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
                     }
+                    data["serie" + ss.str()]["abscisse"] = abscisse;
+                    data["serie" + ss.str()]["ordinate"] = ordinate;
                 }
 
-                json data;
-                data["abscisse"] = abscisse;
-                data["ordinate"] = ordinate;
-
-                std::string data_string = data.dump(4);
+                std::string data_string = data.dump();
                 res->end(data_string.data(), data_string.length());
 
             // Routing Nothing
