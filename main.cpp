@@ -50,7 +50,7 @@ std::string convertTimeToStr(std::time_t time) {
     return ss.str();
 }
 
-void checkRedisKeyLength(std::string redis_host, int redis_port, std::string redis_auth, std::vector<std::string> keys) {
+void checkRedisKeyLength(std::string redis_host, int redis_port, std::string redis_auth, std::vector<std::string> keys, rocksdb::DB* db) {
     cpp_redis::client client;
 
     client.connect(redis_host, redis_port, [](const std::string& host, std::size_t port, cpp_redis::client::connect_state status) {
@@ -64,15 +64,14 @@ void checkRedisKeyLength(std::string redis_host, int redis_port, std::string red
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         for (unsigned int i = 0; i < keys.size(); ++i) {
-            client.llen(keys[i], [i](cpp_redis::reply& reply) {
-                std::cout << "client.llen(key) :" << reply << std::endl;
+            client.llen(keys[i], [i, db](cpp_redis::reply& reply) {
                 g_data_mutex.lock();
                 g_data.push_back(reply);
 
                 std::ostringstream ss;
                 ss << std::setw(3) << std::setfill('0') << i;
-                std::cout << "ss.str() :" << ss.str() << std::endl;
-
+                std::time_t t = std::time(nullptr);
+                db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), std::to_string(reply.as_integer()));
                 g_data_mutex.unlock();
             });
         }
@@ -110,21 +109,17 @@ int main(int argc, char *argv[])
         std::cout << "Port = " << result["port"].as<int>() << std::endl;
         std::cout << "Auth = " << result["auth"].as<std::string>() << std::endl;
         
-        std::vector<std::string> keys_list;
+        std::vector<std::string> keys;
         if (result.count("key"))
         {
             std::cout << "Key = [";
-            keys_list = result["key"].as<std::vector<std::string> >();
-            for (const auto& k : keys_list) {
+            keys = result["key"].as<std::vector<std::string> >();
+            for (const auto& k : keys) {
                 std::cout << k << ", ";
             }
             std::cout << "]" << std::endl;
         }
 
-        // =================================================================================================
-        // Listen Redis keys
-        // Spawn thread to listen redis periodically
-        std::thread checkingKey(checkRedisKeyLength, result["host"].as<std::string>(), result["port"].as<int>(), result["auth"].as<std::string>(), keys_list);
 
         // =================================================================================================
         // Configure RocksDB
@@ -138,36 +133,23 @@ int main(int argc, char *argv[])
         rocksdb::Status s = rocksdb::DB::Open(DBOptions, kDBPath, &db);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
 
-        for (int i = 0; i < 10; i++) {
-            std::cout << "value + i :" << "value" + std::to_string(i) << std::endl;
-            s = db->Put(rocksdb::WriteOptions(), "fookey" + std::to_string(i), "value" + std::to_string(i));
-            s = db->Put(rocksdb::WriteOptions(), "barkey" + std::to_string(i), "value" + std::to_string(i));
-            if (!s.ok()) std::cerr << s.ToString() << std::endl;
-        }    
-
-        auto iter = db->NewIterator(rocksdb::ReadOptions());
-        rocksdb::Slice prefix = "foo";
-        for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
-            std::cout << "iter->key() :" << iter->key().ToString() << std::endl;
-            std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
-        }
-
-        std::time_t t = std::time(nullptr);
-        std::cout << "convertTimeToStr(t) :" << convertTimeToStr(t) << std::endl;
-        std::cout << "T->S->T->S: " << convertTimeToStr(convertStrToTime(convertTimeToStr(t))) << std::endl;
+        // =================================================================================================
+        // Listen Redis keys
+        // Spawn thread to listen redis periodically
+        std::thread checkingKey(checkRedisKeyLength, result["host"].as<std::string>(), result["port"].as<int>(), result["auth"].as<std::string>(), keys, db);
 
         // =================================================================================================
         // Inja Template
         env.setElementNotation(inja::ElementNotation::Dot);
         json parameters;
-        parameters["keys"] = keys_list;
+        parameters["keys"] = keys;
         inja::Template temp = env.parse_template("./index.html.tpl");
         std::string rendered = temp.render(parameters);
 
         // =================================================================================================
         // Web Server
         uWS::Hub h;
-        h.onHttpRequest([rendered](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+        h.onHttpRequest([rendered, keys, db](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
             std::cout << "req.getUrl() :" << req.getUrl().toString() << std::endl;
 
             // Temp string because regex_match don't allow versatile string get by toString
@@ -194,6 +176,20 @@ int main(int argc, char *argv[])
 
             // Routing update
             } else if (std::regex_match(url_temp, pieces_match, route_update)) {
+
+                auto iter = db->NewIterator(rocksdb::ReadOptions());
+
+                for (unsigned int i = 0; i < keys.size(); ++i) {
+                    std::ostringstream ss;
+                    ss << std::setw(3) << std::setfill('0') << i;
+                    rocksdb::Slice prefix = ss.str();
+
+                    for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
+                        std::string tmp = iter->key().ToString();
+                        std::cout << "iter->key() :" << tmp.substr(3, tmp.size()) << std::endl;
+                        std::cout << "iter->value() :" << iter->value().ToString() << std::endl;
+                    }
+                }
                 std::ostringstream contents;
                 for (auto&& x: g_data) {
                     contents << x << " ";
