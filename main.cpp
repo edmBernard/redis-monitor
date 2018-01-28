@@ -50,10 +50,10 @@ std::string convertTimeToStr(std::time_t time) {
     return ss.str();
 }
 
-void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> keys, rocksdb::DB* db) {
+void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> keys, rocksdb::DB* db, int rate) {
 
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(rate));
         for (unsigned int i = 0; i < keys.size(); ++i) {
             client->llen(keys[i], [i, db](cpp_redis::reply& reply) {
                 g_data_mutex.lock();
@@ -87,6 +87,8 @@ int main(int argc, char *argv[])
                 cxxopts::value<std::string>()->default_value("localhost"), "HOST")
             ("p, port", "redis server port", 
                 cxxopts::value<int>()->default_value("6379"), "PORT")
+            ("update-rate", "update rate in second", 
+                cxxopts::value<int>()->default_value("1"), "RATE")
             ("a, auth", "redis server authentification", 
                 cxxopts::value<std::string>()->default_value(""), "AUTH")
             ("k, key", "Keys to monitor", cxxopts::value<std::vector<std::string>>(), "KEYS")
@@ -96,14 +98,15 @@ int main(int argc, char *argv[])
 
         auto result = options.parse(argc, argv);
 
-        std::cout << "Host = " << result["host"].as<std::string>() << std::endl;
-        std::cout << "Port = " << result["port"].as<int>() << std::endl;
-        std::cout << "Auth = " << result["auth"].as<std::string>() << std::endl;
+        std::cout << "host = " << result["host"].as<std::string>() << std::endl;
+        std::cout << "port = " << result["port"].as<int>() << std::endl;
+        std::cout << "auth = " << result["auth"].as<std::string>() << std::endl;
+        std::cout << "update-rate = " << result["update-rate"].as<int>() << std::endl;
         
         std::vector<std::string> keys;
         if (result.count("key"))
         {
-            std::cout << "Key = [";
+            std::cout << "key = [";
             keys = result["key"].as<std::vector<std::string> >();
             for (const auto& k : keys) {
                 std::cout << k << ", ";
@@ -136,7 +139,7 @@ int main(int argc, char *argv[])
         client->auth(result["auth"].as<std::string>());
 
         // Spawn thread to listen redis periodically
-        std::thread checkingKey(checkRedisKeyLength, client, keys, db);
+        std::thread checkingKey(checkRedisKeyLength, client, keys, db, result["update-rate"].as<int>());
 
         // =================================================================================================
         // Inja Template
