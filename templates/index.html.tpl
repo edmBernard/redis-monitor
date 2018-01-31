@@ -35,9 +35,6 @@
             columns: [
             ]
         },
-        size: {
-            height: 400,
-        },
         axis: {
             x: {
                 label: "Time",
