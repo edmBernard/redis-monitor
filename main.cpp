@@ -31,7 +31,7 @@
 using json = nlohmann::json;
 
 std::stringstream indexHtml;
-inja::Environment env = inja::Environment("templates/");
+inja::Environment env = inja::Environment("../templates/");
 std::vector<int> g_data;
 std::mutex g_data_mutex;
 
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 
             // Routing static file
             if (std::regex_match(url_temp, pieces_match, route_static_file)) {
-                std::ifstream in(pieces_match[1].str(), std::ios::in | std::ios::binary);
+                std::ifstream in("../" + pieces_match[1].str(), std::ios::in | std::ios::binary);
                 if (in) {
                     std::ostringstream contents;
                     contents << in.rdbuf();
