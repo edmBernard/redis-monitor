@@ -59,7 +59,7 @@ void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> key
                 g_data.push_back(reply);
 
                 std::ostringstream ss;
-                ss << std::setw(3) << std::setfill('0') << i;
+                ss << "k" << std::setw(3) << std::setfill('0') << i;
                 std::time_t t = std::time(nullptr);
                 db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), std::to_string(reply.as_integer()));
                 g_data_mutex.unlock();
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
         rocksdb::Options DBOptions;
         DBOptions.IncreaseParallelism();
         
-        DBOptions.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(3));
+        DBOptions.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(4));
         // create the DB if it's not already present
         DBOptions.create_if_missing = true;
         std::string kDBPath = result["rocksdb-path"].as<std::string>();
@@ -230,12 +230,12 @@ int main(int argc, char *argv[])
                     json abscisse = json::array();
                     json ordinate = json::array();
                     std::ostringstream ss;
-                    ss << std::setw(3) << std::setfill('0') << i;
+                    ss << "k" << std::setw(3) << std::setfill('0') << i;
                     rocksdb::Slice prefix = ss.str();
 
                     for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
                         std::string tmp = iter->key().ToString();
-                        abscisse.push_back(tmp.substr(3, tmp.size()));
+                        abscisse.push_back(tmp.substr(4, tmp.size()));
                         ordinate.push_back(iter->value().ToString());
                     }
 
