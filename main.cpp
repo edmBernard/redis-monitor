@@ -30,7 +30,6 @@
 
 using json = nlohmann::json;
 
-inja::Environment env = inja::Environment("../templates/");
 std::mutex g_data_mutex;
 
 std::time_t convertStrToTime(std::string stime) {
@@ -235,6 +234,7 @@ int main(int argc, char *argv[])
 
         // =================================================================================================
         // Inja Template
+        inja::Environment env = inja::Environment("../templates/");
         env.setElementNotation(inja::ElementNotation::Dot);
         json parameters;
         parameters["keys"] = keys;
@@ -246,8 +246,6 @@ int main(int argc, char *argv[])
         // Web Server
         uWS::Hub h;
         h.onHttpRequest([rendered, keys, patterns, db](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
-            std::cout << "req.getUrl() :" << req.getUrl().toString() << std::endl;
-
             // Temp string because regex_match don't allow versatile string get by toString
             std::string url_temp = req.getUrl().toString();
             // Routing
