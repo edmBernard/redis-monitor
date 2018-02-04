@@ -163,6 +163,32 @@ int main(int argc, char *argv[])
         rocksdb::Status s = rocksdb::DB::Open(DBOptions, kDBPath, &db);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
 
+        // add null data in graph to separate data from previous session
+        std::time_t t = std::time(nullptr);
+
+        for (unsigned int i = 0; i < keys.size(); ++i) {
+            std::ostringstream ss;
+            ss << "k" << std::setw(3) << std::setfill('0') << i;
+
+            g_data_mutex.lock();
+            db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), "null");
+            g_data_mutex.unlock();
+        }
+
+        for (unsigned int i = 0; i < patterns.size(); ++i) {
+            std::ostringstream ssc;
+            ssc << "c" << std::setw(3) << std::setfill('0') << i;
+            std::ostringstream ssp;
+            ssp << "p" << std::setw(3) << std::setfill('0') << i;
+            std::string value;
+
+            g_data_mutex.lock();
+            db->Put(rocksdb::WriteOptions(), ssp.str() + convertTimeToStr(t), "null");
+            // Counter initialisation at start to remove old counter value
+            db->Put(rocksdb::WriteOptions(), ssc.str(), "0");
+            g_data_mutex.unlock();
+        }
+
         // =================================================================================================
         // Listen Redis keys
         cpp_redis::client *client = new cpp_redis::client();
@@ -191,13 +217,6 @@ int main(int argc, char *argv[])
         sub->auth(result["auth"].as<std::string>());
 
         for (unsigned int i = 0; i < patterns.size(); ++i) {
-            // Counter initialisation at start to remove old counter value
-            std::ostringstream ss;
-            ss << "c" << std::setw(3) << std::setfill('0') << i;
-            g_data_mutex.lock();
-            db->Put(rocksdb::WriteOptions(), ss.str(), "0");
-            g_data_mutex.unlock();
-
             // redis pattern subsciption on pubsub we increment counter of specific pattern
             sub->psubscribe(patterns[i], [i, db](const std::string& chan, const std::string& msg) {
                 std::ostringstream ss;
