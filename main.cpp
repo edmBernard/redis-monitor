@@ -32,7 +32,6 @@ using json = nlohmann::json;
 
 std::stringstream indexHtml;
 inja::Environment env = inja::Environment("../templates/");
-std::vector<int> g_data;
 std::mutex g_data_mutex;
 
 std::time_t convertStrToTime(std::string stime) {
@@ -56,8 +55,6 @@ void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> key
         for (unsigned int i = 0; i < keys.size(); ++i) {
             client->llen(keys[i], [i, db](cpp_redis::reply& reply) {
                 g_data_mutex.lock();
-                g_data.push_back(reply);
-
                 std::ostringstream ss;
                 ss << "k" << std::setw(3) << std::setfill('0') << i;
                 std::time_t t = std::time(nullptr);
@@ -174,13 +171,28 @@ int main(int argc, char *argv[])
         sub->auth(result["auth"].as<std::string>());
 
         for (unsigned int i = 0; i < patterns.size(); ++i) {
-            sub->psubscribe(patterns[i], [i](const std::string& chan, const std::string& msg) {
+            // Counter initialisation at start to remove old counter value
+            std::ostringstream ss;
+            ss << "c" << std::setw(3) << std::setfill('0') << i;
+            g_data_mutex.lock();
+            db->Put(rocksdb::WriteOptions(), ss.str(), "0");
+            g_data_mutex.unlock();
+
+            // redis pattern subsciption on pubsub we increment counter of specific pattern
+            sub->psubscribe(patterns[i], [i, db](const std::string& chan, const std::string& msg) {
                 std::cout << "PMESSAGE " << i << ": " << chan << ": " << msg << std::endl;
+                std::ostringstream ss;
+                ss << "c" << std::setw(3) << std::setfill('0') << i;
+                std::string value;
+
+                g_data_mutex.lock();
+                db->Get(rocksdb::ReadOptions(), ss.str(), &value);
+                db->Put(rocksdb::WriteOptions(), ss.str(), std::to_string( std::stoi(value) + 1));
+                g_data_mutex.unlock();
             });
         }
 
         sub->commit();
-
 
         // =================================================================================================
         // Inja Template
