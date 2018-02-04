@@ -48,21 +48,39 @@ std::string convertTimeToStr(std::time_t time) {
     return ss.str();
 }
 
-void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> keys, rocksdb::DB* db, int rate) {
+void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> keys, std::vector<std::string> patterns, rocksdb::DB* db, int rate) {
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(rate));
+        std::time_t t = std::time(nullptr);
+
+        // Process key length
         for (unsigned int i = 0; i < keys.size(); ++i) {
-            client->llen(keys[i], [i, db](cpp_redis::reply& reply) {
-                g_data_mutex.lock();
+            client->llen(keys[i], [i, db, t](cpp_redis::reply& reply) {
                 std::ostringstream ss;
                 ss << "k" << std::setw(3) << std::setfill('0') << i;
-                std::time_t t = std::time(nullptr);
+
+                g_data_mutex.lock();
                 db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), std::to_string(reply.as_integer()));
                 g_data_mutex.unlock();
             });
         }
+
         client->sync_commit();
+
+        // Process pattern publish
+        for (unsigned int i = 0; i < patterns.size(); ++i) {
+            std::ostringstream ss;
+            ss << "p" << std::setw(3) << std::setfill('0') << i;
+            std::string value;
+
+            g_data_mutex.lock();
+            db->Get(rocksdb::ReadOptions(), ss.str(), &value);
+            db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), value);
+            db->Put(rocksdb::WriteOptions(), ss.str(), "0");
+            g_data_mutex.unlock();
+        }
+
     }
 }
 
@@ -156,7 +174,7 @@ int main(int argc, char *argv[])
         client->auth(result["auth"].as<std::string>());
 
         // Spawn thread to listen redis periodically
-        std::thread checkingKey(checkRedisKeyLength, client, keys, db, result["update-rate"].as<int>());
+        std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, db, result["update-rate"].as<int>());
 
         // =================================================================================================
         // Redis subscriber
@@ -180,7 +198,6 @@ int main(int argc, char *argv[])
 
             // redis pattern subsciption on pubsub we increment counter of specific pattern
             sub->psubscribe(patterns[i], [i, db](const std::string& chan, const std::string& msg) {
-                std::cout << "PMESSAGE " << i << ": " << chan << ": " << msg << std::endl;
                 std::ostringstream ss;
                 ss << "c" << std::setw(3) << std::setfill('0') << i;
                 std::string value;
