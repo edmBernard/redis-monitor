@@ -237,6 +237,7 @@ int main(int argc, char *argv[])
         env.setElementNotation(inja::ElementNotation::Dot);
         json parameters;
         parameters["keys"] = keys;
+        parameters["patterns"] = patterns;
         inja::Template temp = env.parse_template("./index.html.tpl");
         std::string rendered = temp.render(parameters);
 
