@@ -30,7 +30,12 @@
 
     var chart_keys = bb.generate({
         data: {
-            x: "x",
+            xs: {
+                {% for i in keys %}
+                {{i}}: "x{{i}}",
+                {% endfor %}
+                padding: "padding"
+            },
             xFormat: '%Y-%m-%d %H:%M:%S',
             columns: [
             ]
@@ -68,7 +73,12 @@
 
     var chart_patterns = bb.generate({
         data: {
-            x: "x",
+            xs: {
+                {% for i in patterns %}
+                "{{i}}": "x{{i}}",
+                {% endfor %}
+                padding: "padding"
+            },
             xFormat: '%Y-%m-%d %H:%M:%S',
             columns: [
             ]
@@ -120,7 +130,7 @@
         for (let i = 0; i < response.length; i++) {
             chart_keys.load({
                 columns: [
-                    ["x"].concat(response[i].abscisse),
+                    ["x" + response[i].id].concat(response[i].abscisse),
                     [response[i].id].concat(response[i].ordinate)
                 ]
             });
@@ -132,7 +142,7 @@
         for (let i = 0; i < response.length; i++) {
             chart_patterns.load({
                 columns: [
-                    ["x"].concat(response[i].abscisse),
+                    ["x" + response[i].id].concat(response[i].abscisse),
                     [response[i].id].concat(response[i].ordinate)
                 ]
             });
