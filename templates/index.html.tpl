@@ -125,31 +125,41 @@
         xmlHttp.send(null);
     }
 
-    httpGetAsync('/updatekeys', function(response) {
-        response = JSON.parse(response);
-        for (let i = 0; i < response.length; i++) {
-            chart_keys.load({
-                columns: [
-                    ["x" + response[i].id].concat(response[i].abscisse),
-                    [response[i].id].concat(response[i].ordinate)
-                ]
-            });
-        }
-    });
+    function updategraph() {
+        httpGetAsync('/updatekeys', function(response) {
+            response = JSON.parse(response);
+            for (let i = 0; i < response.length; i++) {
+                chart_keys.load({
+                    columns: [
+                        ["x" + response[i].id].concat(response[i].abscisse),
+                        [response[i].id].concat(response[i].ordinate)
+                    ]
+                });
+            }
+        });
 
-    httpGetAsync('/updatepatterns', function(response) {
-        response = JSON.parse(response);
-        for (let i = 0; i < response.length; i++) {
-            chart_patterns.load({
-                columns: [
-                    ["x" + response[i].id].concat(response[i].abscisse),
-                    [response[i].id].concat(response[i].ordinate)
-                ]
-            });
-        }
-    });
+        httpGetAsync('/updatepatterns', function(response) {
+            response = JSON.parse(response);
+            for (let i = 0; i < response.length; i++) {
+                chart_patterns.load({
+                    columns: [
+                        ["x" + response[i].id].concat(response[i].abscisse),
+                        [response[i].id].concat(response[i].ordinate)
+                    ]
+                });
+            }
+        });
+    };
 
+    updategraph();
 
+    ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port);
+	ws.onmessage = function(e) {
+        updategraph();
+	};
+	ws.onclose = function() {
+		console.log("disconnected from server");
+	};
 
     </script>
 </body>

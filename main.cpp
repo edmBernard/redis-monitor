@@ -30,7 +30,6 @@
 
 using json = nlohmann::json;
 
-std::stringstream indexHtml;
 inja::Environment env = inja::Environment("../templates/");
 std::mutex g_data_mutex;
 
@@ -48,7 +47,8 @@ std::string convertTimeToStr(std::time_t time) {
     return ss.str();
 }
 
-void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> keys, std::vector<std::string> patterns, rocksdb::DB* db, int rate) {
+void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> keys, std::vector<std::string> patterns, rocksdb::DB *db, uWS::Hub *h, int rate)
+{
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(rate));
@@ -82,6 +82,9 @@ void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> key
             db->Put(rocksdb::WriteOptions(), ssc.str(), "0");
             g_data_mutex.unlock();
         }
+
+        std::string tmp = "update you";
+        h->getDefaultGroup<uWS::SERVER>().broadcast(tmp.data(), tmp.length(), uWS::TEXT);
 
     }
 }
@@ -201,8 +204,6 @@ int main(int argc, char *argv[])
 
         client->auth(result["auth"].as<std::string>());
 
-        // Spawn thread to listen redis periodically
-        std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, db, result["update-rate"].as<int>());
 
         // =================================================================================================
         // Redis subscriber
@@ -335,6 +336,19 @@ int main(int argc, char *argv[])
                 res->end(nullptr, 0);
             }
         });
+
+        // =================================================================================================
+        // Websocker Server
+        h.onConnection([](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req) {
+            std::cout << "one client connected" << std::endl;
+        });
+
+        h.onDisconnection([](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length) {
+            std::cout << "one client disconnected" << std::endl;
+        });
+
+        // Spawn thread to listen redis periodically, update publish speed and send websocket to client
+        std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, db, &h, result["update-rate"].as<int>());
 
         h.getDefaultGroup<uWS::SERVER>().startAutoPing(30000);
         if (h.listen(3000)) {
