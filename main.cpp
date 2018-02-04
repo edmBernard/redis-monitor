@@ -82,8 +82,8 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
             g_data_mutex.unlock();
         }
 
-        std::string tmp = "update you";
-        h->getDefaultGroup<uWS::SERVER>().broadcast(tmp.data(), tmp.length(), uWS::TEXT);
+        // std::string tmp = "update you";
+        // h->getDefaultGroup<uWS::SERVER>().broadcast(tmp.data(), tmp.length(), uWS::TEXT);
 
     }
 }
