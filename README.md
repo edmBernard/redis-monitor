@@ -11,14 +11,14 @@ Fun project to learn some cpp libraries :
 # Basic information
 
 Rocks database store all processed data:
-k + 000 + YYYY-MM-DD HH:MM:SS   -> key length of the first key in command line list
-p + 000 + YYYY-MM-DD HH:MM:SS   -> # of pub per time step for the first pattern
-c + 000                         -> counter to track # of pub for the first pattern
+- `k + 000 + YYYY-MM-DD HH:MM:SS` : key length of the first key in command line list
+- `p + 000 + YYYY-MM-DD HH:MM:SS` : # of pub per time step for the first pattern
+- `c + 000` : counter to track # of pub for the first pattern
 
 Note: 
 - It seem that billboard/c3js have memory leak on updating datas. In the current state, memory will leak on each websocket call for update :(
 
 TODO:
 - Test with charjs instead of c3, hopping they don't have memory leak (charjs use canvas and c3js is svg based).
-- Clean code add, abstraction for rocksdb to be able to desactivate it (persistance) and only using standard C++ type
-- add alias for keys in command line with a default the index (KeyOfTheYears -> KTY [default:001])
+- Clean code add abstraction for rocksdb to be able to desactivate it (persistance) and only using standard C++ type (map/vector)
+- add 3 letters alias for keys in command line currently key alias in database is its index in command line 
