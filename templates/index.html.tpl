@@ -22,7 +22,7 @@
     </section>
     <section class="section">
         <div class="container">
-            <h1 class="title">PubSub monitoring</h1>
+            <h1 class="title">PubSub speed monitoring</h1>
             <div id="patternsSpeed"></div>
         </div>
     </section>
@@ -46,7 +46,7 @@
                 }
             },
             y: {
-                label: "keys' length",
+                label: "Keys length",
                 min: 0
             }
         },
@@ -82,12 +82,12 @@
                 }
             },
             y: {
-                label: "keys' length",
+                label: "Publish speed",
                 min: 0
             }
         },
         title: {
-            text: 'Keys length monitoring'
+            text: 'Publish speed monitoring'
         },
         grid: {
             x: {

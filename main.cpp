@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
         // =================================================================================================
         // Web Server
         uWS::Hub h;
-        h.onHttpRequest([rendered, keys, db](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+        h.onHttpRequest([rendered, keys, patterns, db](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
             std::cout << "req.getUrl() :" << req.getUrl().toString() << std::endl;
 
             // Temp string because regex_match don't allow versatile string get by toString
@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
                         ordinate.push_back(iter->value().ToString());
                     }
 
-                    temp["id"] = keys[i];
+                    temp["id"] = patterns[i];
                     temp["abscisse"] = abscisse;
                     temp["ordinate"] = ordinate;
                     data.push_back(temp);
