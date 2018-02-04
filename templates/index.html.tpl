@@ -40,7 +40,6 @@
                 label: "Time",
                 type: "timeseries",
                 tick: {
-                    rotate: 45,
                     fit: false,
                     format: "%Y-%m-%d %H:%M:%S"
                 }
@@ -49,6 +48,9 @@
                 label: "Keys length",
                 min: 0
             }
+        },
+        subchart: {
+            show: true
         },
         title: {
             text: 'Keys length monitoring'
@@ -76,7 +78,6 @@
                 label: "Time",
                 type: "timeseries",
                 tick: {
-                    rotate: 45,
                     fit: false,
                     format: "%Y-%m-%d %H:%M:%S"
                 }
@@ -85,6 +86,9 @@
                 label: "Publish speed",
                 min: 0
             }
+        },
+        subchart: {
+            show: true
         },
         title: {
             text: 'Publish speed monitoring'
