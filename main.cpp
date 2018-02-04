@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 
                 g_data_mutex.lock();
                 db->Get(rocksdb::ReadOptions(), ss.str(), &value);
-                db->Put(rocksdb::WriteOptions(), ss.str(), std::to_string( std::stoi(value) + 1));
+                db->Put(rocksdb::WriteOptions(), ss.str(), std::to_string(std::stoi(value) + 1));
                 g_data_mutex.unlock();
             });
         }
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
 
                 auto iter = db->NewIterator(rocksdb::ReadOptions());
 
-                for (unsigned int i = 0; i < keys.size(); ++i) {
+                for (unsigned int i = 0; i < patterns.size(); ++i) {
                     json temp;
                     json abscisse = json::array();
                     json ordinate = json::array();
