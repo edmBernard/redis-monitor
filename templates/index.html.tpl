@@ -17,18 +17,18 @@
     <section class="section">
         <div class="container">
             <h1 class="title">Keys length monitoring</h1>
-                <div id="keysLength"></div>
+            <div id="keysLength"></div>
         </div>
     </section>
     <section class="section">
         <div class="container">
             <h1 class="title">PubSub monitoring</h1>
-
+            <div id="patternsSpeed"></div>
         </div>
     </section>
 <script>
 
-    var chart = bb.generate({
+    var chart_keys = bb.generate({
         data: {
             x: "x",
             xFormat: '%Y-%m-%d %H:%M:%S',
@@ -64,6 +64,42 @@
         bindto: "#keysLength"
     });
 
+    var chart_patterns = bb.generate({
+        data: {
+            x: "x",
+            xFormat: '%Y-%m-%d %H:%M:%S',
+            columns: [
+            ]
+        },
+        axis: {
+            x: {
+                label: "Time",
+                type: "timeseries",
+                tick: {
+                    rotate: 45,
+                    fit: false,
+                    format: "%Y-%m-%d %H:%M:%S"
+                }
+            },
+            y: {
+                label: "keys' length",
+                min: 0
+            }
+        },
+        title: {
+            text: 'Keys length monitoring'
+        },
+        grid: {
+            x: {
+              show: true
+            },
+            y: {
+              show: true
+            }
+        },
+        bindto: "#patternsSpeed"
+    });
+
     function httpGetAsync(theUrl, callback)
     {
         var xmlHttp = new XMLHttpRequest();
@@ -75,10 +111,22 @@
         xmlHttp.send(null);
     }
 
-    httpGetAsync('/update', function(response) {
+    httpGetAsync('/updatekeys', function(response) {
         response = JSON.parse(response);
         for (let i = 0; i < response.length; i++) {
-            chart.load({
+            chart_keys.load({
+                columns: [
+                    ["x"].concat(response[i].abscisse),
+                    [response[i].id].concat(response[i].ordinate)
+                ]
+            });
+        }
+    });
+
+    httpGetAsync('/updatepatterns', function(response) {
+        response = JSON.parse(response);
+        for (let i = 0; i < response.length; i++) {
+            chart_patterns.load({
                 columns: [
                     ["x"].concat(response[i].abscisse),
                     [response[i].id].concat(response[i].ordinate)

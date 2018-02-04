@@ -70,14 +70,16 @@ void checkRedisKeyLength(cpp_redis::client* client, std::vector<std::string> key
 
         // Process pattern publish
         for (unsigned int i = 0; i < patterns.size(); ++i) {
-            std::ostringstream ss;
-            ss << "p" << std::setw(3) << std::setfill('0') << i;
+            std::ostringstream ssc;
+            ssc << "c" << std::setw(3) << std::setfill('0') << i;
+            std::ostringstream ssp;
+            ssp << "p" << std::setw(3) << std::setfill('0') << i;
             std::string value;
 
             g_data_mutex.lock();
-            db->Get(rocksdb::ReadOptions(), ss.str(), &value);
-            db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), value);
-            db->Put(rocksdb::WriteOptions(), ss.str(), "0");
+            db->Get(rocksdb::ReadOptions(), ssc.str(), &value);
+            db->Put(rocksdb::WriteOptions(), ssp.str() + convertTimeToStr(t), value);
+            db->Put(rocksdb::WriteOptions(), ssc.str(), "0");
             g_data_mutex.unlock();
         }
 
@@ -230,7 +232,8 @@ int main(int argc, char *argv[])
             // Routing
             std::regex route_static_file("/(static/.*)");
             std::regex route_home("/");
-            std::regex route_update("/update");
+            std::regex route_update_keys("/updatekeys");
+            std::regex route_update_patterns("/updatepatterns");
             std::smatch pieces_match;
 
             // Routing static file
@@ -248,7 +251,7 @@ int main(int argc, char *argv[])
                 res->end(rendered.data(), rendered.length());
 
             // Routing update
-            } else if (std::regex_match(url_temp, pieces_match, route_update)) {
+            } else if (std::regex_match(url_temp, pieces_match, route_update_keys)) {
 
                 json data = json::array();
 
@@ -260,6 +263,35 @@ int main(int argc, char *argv[])
                     json ordinate = json::array();
                     std::ostringstream ss;
                     ss << "k" << std::setw(3) << std::setfill('0') << i;
+                    rocksdb::Slice prefix = ss.str();
+
+                    for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
+                        std::string tmp = iter->key().ToString();
+                        abscisse.push_back(tmp.substr(4, tmp.size()));
+                        ordinate.push_back(iter->value().ToString());
+                    }
+
+                    temp["id"] = keys[i];
+                    temp["abscisse"] = abscisse;
+                    temp["ordinate"] = ordinate;
+                    data.push_back(temp);
+                }
+
+                std::string data_string = data.dump();
+                res->end(data_string.data(), data_string.length());
+
+            } else if (std::regex_match(url_temp, pieces_match, route_update_patterns)) {
+
+                json data = json::array();
+
+                auto iter = db->NewIterator(rocksdb::ReadOptions());
+
+                for (unsigned int i = 0; i < keys.size(); ++i) {
+                    json temp;
+                    json abscisse = json::array();
+                    json ordinate = json::array();
+                    std::ostringstream ss;
+                    ss << "p" << std::setw(3) << std::setfill('0') << i;
                     rocksdb::Slice prefix = ss.str();
 
                     for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
