@@ -77,9 +77,3 @@ SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC")
 add_executable(redis-monitor ${SOURCES})
 target_link_libraries(redis-monitor -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})
 add_dependencies(redis-monitor uwebsocket_lib rocksdb_lib)
-install(TARGETS redis-monitor DESTINATION bin)
-install(PROGRAMS modules/uWebSockets/libuWS.so DESTINATION lib)
-
-add_custom_target(uninstall
-  COMMAND xargs rm < install_manifest.txt
-)
