@@ -1,4 +1,4 @@
-project(redis_monitor)
+project(redis-monitor)
 
 #**************************************************************************************************
 # General cMake settings 
@@ -53,7 +53,6 @@ add_custom_target(
   DEPENDS ${UWEBSOCKET_LIBS}
 )
 
-
 #**************************************************************************************************
 # Include **************************************************************************************************
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -75,9 +74,12 @@ SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC")
 #**************************************************************************************************
 # Make configuration 
 #**************************************************************************************************
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
-MESSAGE( " ***   CMAKE_RUNTIME_OUTPUT_DIRECTORY : " ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} )
+add_executable(redis-monitor ${SOURCES})
+target_link_libraries(redis-monitor -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})
+add_dependencies(redis-monitor uwebsocket_lib rocksdb_lib)
+install(TARGETS redis-monitor DESTINATION bin)
+install(PROGRAMS modules/uWebSockets/libuWS.so DESTINATION lib)
 
-add_executable(redis_monitor ${SOURCES})
-target_link_libraries(redis_monitor -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})
-add_dependencies(redis_monitor uwebsocket_lib rocksdb_lib)
+add_custom_target(uninstall
+  COMMAND xargs rm < install_manifest.txt
+)
