@@ -8,6 +8,17 @@ Fun project to learn some cpp libraries :
 - [inja](https://github.com/pantor/inja): Template Engine similar to python Jinja
 - [rocksdb](https://github.com/facebook/rocksdb): Embedded database
 
+# Dependency
+
+* uWebsocket depends on openssl
+```bash
+apt-get install libssl-dev
+```
+* redis_cpp depends on libuv
+```bash
+apt-get install libuv1-dev
+```
+
 # Basic information
 
 Rocks database store all processed data:
