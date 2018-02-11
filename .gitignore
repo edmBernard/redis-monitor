@@ -1,6 +1,6 @@
 .vscode
 
 /build
+/bin
 /rocksdb
 !/rocksdb/README.md
-redis_monitor
