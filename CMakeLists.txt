@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.5)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cxxopts/include)
 
 # json deps
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/json/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/json/single_include/nlohmann)
 
 # inja deps
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/inja/src)
