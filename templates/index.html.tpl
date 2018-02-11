@@ -125,37 +125,55 @@
         xmlHttp.send(null);
     }
 
-    function updategraph() {
-        httpGetAsync('/updatekeys', function(response) {
-            response = JSON.parse(response);
-            for (let i = 0; i < response.length; i++) {
-                chart_keys.load({
-                    columns: [
-                        ["x" + response[i].id].concat(response[i].abscisse),
-                        [response[i].id].concat(response[i].ordinate)
-                    ]
-                });
-            }
-        });
+    httpGetAsync('/updatekeys', function(response) {
+        response = JSON.parse(response);
+        for (let i = 0; i < response.length; i++) {
+            chart_keys.load({
+                columns: [
+                    ["x" + response[i].id].concat(response[i].abscisse),
+                    [response[i].id].concat(response[i].ordinate)
+                ]
+            });
+        }
+    });
 
-        httpGetAsync('/updatepatterns', function(response) {
-            response = JSON.parse(response);
-            for (let i = 0; i < response.length; i++) {
-                chart_patterns.load({
-                    columns: [
-                        ["x" + response[i].id].concat(response[i].abscisse),
-                        [response[i].id].concat(response[i].ordinate)
-                    ]
-                });
-            }
-        });
-    };
-
-    updategraph();
+    httpGetAsync('/updatepatterns', function(response) {
+        response = JSON.parse(response);
+        for (let i = 0; i < response.length; i++) {
+            chart_patterns.load({
+                columns: [
+                    ["x" + response[i].id].concat(response[i].abscisse),
+                    [response[i].id].concat(response[i].ordinate)
+                ]
+            });
+        }
+    });
 
     ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port);
 	ws.onmessage = function(e) {
-        updategraph();
+        let data = JSON.parse(e.data);
+
+        let columns_to_add = [];
+        for (let i = 0; i < data.keys.length; i++) {
+            columns_to_add.push(["x" + data.keys[i].id].concat(data.date))
+            columns_to_add.push([data.keys[i].id].concat(data.keys[i].value))
+        }
+
+        chart_keys.flow({
+            columns: columns_to_add,
+            length: 0
+        });
+
+        columns_to_add = [];
+        for (let i = 0; i < data.patterns.length; i++) {
+            columns_to_add.push(["x" + data.patterns[i].id].concat(data.date))
+            columns_to_add.push([data.patterns[i].id].concat(data.patterns[i].value))
+        }
+
+        chart_patterns.flow({
+            columns: columns_to_add,
+            length: 0
+        });
 	};
 	ws.onclose = function() {
 		console.log("disconnected from server");

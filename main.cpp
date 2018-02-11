@@ -52,13 +52,19 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(rate));
         std::time_t t = std::time(nullptr);
+        json new_data;
+        new_data["date"] = convertTimeToStr(t);
 
         // Process key length
+        json new_data_key = json::array();
         for (unsigned int i = 0; i < keys.size(); ++i) {
-            client->llen(keys[i], [i, db, t](cpp_redis::reply& reply) {
+            client->llen(keys[i], [i, keys, db, t, &new_data_key](cpp_redis::reply& reply) {
                 std::ostringstream ss;
                 ss << "k" << std::setw(3) << std::setfill('0') << i;
-
+                json tmp;
+                tmp["id"] = keys[i];
+                tmp["value"] = reply.as_integer();
+                new_data_key.push_back(tmp);
                 g_data_mutex.lock();
                 db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), std::to_string(reply.as_integer()));
                 g_data_mutex.unlock();
@@ -68,6 +74,7 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
         client->sync_commit();
 
         // Process pattern publish
+        json new_data_pattern = json::array();
         for (unsigned int i = 0; i < patterns.size(); ++i) {
             std::ostringstream ssc;
             ssc << "c" << std::setw(3) << std::setfill('0') << i;
@@ -77,13 +84,20 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
 
             g_data_mutex.lock();
             db->Get(rocksdb::ReadOptions(), ssc.str(), &value);
+            json tmp;
+            tmp["id"] = patterns[i];
+            tmp["value"] = value;
+            new_data_pattern.push_back(tmp);
             db->Put(rocksdb::WriteOptions(), ssp.str() + convertTimeToStr(t), value);
             db->Put(rocksdb::WriteOptions(), ssc.str(), "0");
             g_data_mutex.unlock();
         }
 
-        // std::string tmp = "update you";
-        // h->getDefaultGroup<uWS::SERVER>().broadcast(tmp.data(), tmp.length(), uWS::TEXT);
+        new_data["patterns"] = new_data_pattern;
+        new_data["keys"] = new_data_key;
+
+        std::string data_string = new_data.dump();
+        h->getDefaultGroup<uWS::SERVER>().broadcast(data_string.data(), data_string.length(), uWS::TEXT);
 
     }
 }
