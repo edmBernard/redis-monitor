@@ -1,31 +1,96 @@
 
 #pragma once
 
-#ifndef _TOOLS_HPP_
-#define _TOOLS_HPP_
+#ifndef TOOLS_HPP_
+#define TOOLS_HPP_
 
+#include <map>
 #include <string>
 
-class Database
-{
+namespace eb {
+
+class Database {
 public:
-    virtual void get() = 0;
-    virtual void set() = 0;
-    virtual void lGet() = 0;
-    virtual void lPush() = 0;
+  virtual void hset(const std::string, const std::string, const float) const = 0;
+  virtual void hset(const std::string, const std::string, const int) const = 0;
+  virtual std::map<std::string, float> const &hgetall(std::string prefix) = 0;
 };
 
-class Tic
-{
+class RocksdbDatabase : public Database {
 public:
-    Tic(std::string name) : name(name) {}
-    void incr() { ++this->count; }
-    void reset() { this->count=0; }
-    int const &get() const { return this->count; }
+  RocksdbDatabase(std::string path) : path(path) {}
+  std::map<std::string, float> &hgetall() {
+    std::map<std::string, float> tmp;
+    tmp["azer"] = 123.123;
+    return tmp;
+  }
 
 private:
-    int count;
-    std::string name;
+  std::string path;
 };
 
-#endif // !_TOOLS_HPP_
+class StlDatabase : public Database {
+public:
+  StlDatabase() {}
+  std::map<std::string, float> &hgetall() {
+    std::map<std::string, float> tmp;
+    tmp["azer"] = 123.123;
+    return tmp;
+  }
+
+private:
+  std::map<std::string, std::map<std::string, float>> data;
+};
+
+class Tic {
+public:
+  Tic(std::string name) : name(name) {}
+  void incr() { ++this->count; }
+  void reset() { this->count = 0; }
+  const int get() const { return this->count; }
+
+private:
+  int count = 0;
+  std::string name;
+};
+
+class Monitor {
+public:
+  Monitor(Database &database, std::string prefix) : database(database), prefix(prefix) {}
+  // virtual void add(std::string data, int value) = 0;  // Differe in function of update policy
+  std::map<std::string, float> get() { return database.hgetall(this->prefix); }
+
+protected:
+  Database &database;
+  std::string prefix;
+  std::pair<std::string, float> lastData;
+};
+
+class MonitorLength : public Monitor {
+public:
+  MonitorLength(Database &database, std::string prefix) : Monitor(database, prefix) {}
+
+  void add(std::string date, int keyLength) {
+    this->lastData = {date, keyLength};
+    database.hset(this->prefix, date, keyLength);
+  };
+};
+
+class MonitorFrequency : public Monitor {
+public:
+  MonitorFrequency(Database &database, std::string prefix) : Monitor(database, prefix), counter(prefix) {}
+
+  void incr(std::string date, float value) { this->counter.incr(); };
+  void add(std::string date) {
+    this->lastData = {date, this->counter.get()};
+    database.hset(this->prefix, date, this->counter.get());
+    this->counter.reset();
+  };
+
+private:
+  Tic counter;
+};
+
+}; // namespace eb
+
+#endif // !TOOLS_HPP_
