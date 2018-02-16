@@ -1,0 +1,14 @@
+---
+# We'll use defaults from the LLVM style, but with 4 columns indentation.
+BasedOnStyle: LLVM
+UseTab: Never
+AccessModifierOffset: -4
+IndentWidth: 4
+---
+Language: Cpp
+PointerAlignment: Right
+ColumnLimit: 120
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+---
