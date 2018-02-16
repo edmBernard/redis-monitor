@@ -1,7 +1,7 @@
 project(redis-monitor)
 
 #**************************************************************************************************
-# General cMake settings 
+# General cMake settings
 #**************************************************************************************************
 cmake_minimum_required(VERSION 3.5)
 
@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.5)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cxxopts/include)
 
 # json deps
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/json/single_include/nlohmann)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/json/single_include)
 
 # inja deps
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/inja/src)
@@ -72,7 +72,7 @@ SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC")
 
 
 #**************************************************************************************************
-# Make configuration 
+# Make configuration
 #**************************************************************************************************
 add_executable(redis-monitor ${SOURCES})
 target_link_libraries(redis-monitor -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})

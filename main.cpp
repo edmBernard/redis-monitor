@@ -20,13 +20,13 @@
 #include <cxxopts.hpp>
 #include <cpp_redis/cpp_redis>
 #include <uWS.h>
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 #include "inja.hpp"
 #include "rocksdb/db.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/options.h"
 #include "rocksdb/slice_transform.h"
-
+#include "tools.hpp"
 
 using json = nlohmann::json;
 
@@ -112,25 +112,25 @@ int main(int argc, char *argv[])
         options
             .positional_help("[optional args]")
             .show_positional_help();
-        
+
         options.add_options()
             ("help", "Print help")
-            ("h, host", "redis server hostname", 
+            ("h, host", "redis server hostname",
                 cxxopts::value<std::string>()->default_value("localhost"), "HOST")
-            ("p, port", "redis server port", 
+            ("p, port", "redis server port",
                 cxxopts::value<int>()->default_value("6379"), "PORT")
-            ("a, auth", "redis server authentification", 
+            ("a, auth", "redis server authentification",
                 cxxopts::value<std::string>()->default_value(""), "AUTH")
-            ("rocksdb-path", "path for rocksdb", 
+            ("rocksdb-path", "path for rocksdb",
                 cxxopts::value<std::string>()->default_value("/tmp/redis_monitor"), "PATH")
-            ("update-rate", "update rate in second", 
+            ("update-rate", "update rate in second",
                 cxxopts::value<int>()->default_value("1"), "RATE")
-            ("psubscribe", "pattern used to redis pattern subscription", 
+            ("psubscribe", "pattern used to redis pattern subscription",
                 cxxopts::value<std::vector<std::string>>(), "PATTERN")
-            ("k, key", "Keys to monitor", 
+            ("k, key", "Keys to monitor",
                 cxxopts::value<std::vector<std::string>>(), "KEYS")
         ;
-        
+
         auto result = options.parse(argc, argv);
 
         if (result.count("help")) {
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
         std::cout << "auth = " << result["auth"].as<std::string>() << std::endl;
         std::cout << "update-rate = " << result["update-rate"].as<int>() << std::endl;
         std::cout << "rocksdb-path = " << result["rocksdb-path"].as<std::string>() << std::endl;
-        
+
         std::vector<std::string> keys;
         if (result.count("key"))
         {
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
         rocksdb::DB *db;
         rocksdb::Options DBOptions;
         DBOptions.IncreaseParallelism();
-        
+
         DBOptions.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(4));
         // create the DB if it's not already present
         DBOptions.create_if_missing = true;
