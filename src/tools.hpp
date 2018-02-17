@@ -13,6 +13,10 @@
 
 #include <map>
 #include <string>
+#include <mutex>
+#include "nlohmann/json.hpp"
+
+using json = nlohmann::json;
 
 namespace eb {
 
@@ -70,6 +74,7 @@ public:
   Monitor(Database &database, std::string prefix) : database(database), prefix(prefix) {}
   // virtual void add(std::string data, int value) = 0;  // Differe in function of update policy
   const std::map<std::string, float> &get() { return database.hgetall(this->prefix); }
+  const json &to_json() { return json(database.hgetall(this->prefix)); }
   std::pair<std::string, float> lastData;
 
 protected:
