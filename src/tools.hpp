@@ -1,3 +1,10 @@
+//
+//  tools.hpp
+//  redis-monitor
+//
+//  Created by Erwan BERNARD on 17/02/2018.
+//  Copyright © 2018 Erwan BERNARD. All rights reserved.
+//
 
 #pragma once
 
@@ -11,8 +18,7 @@ namespace eb {
 
 class Database {
 public:
-  virtual void hset(const std::string, const std::string, const float) const = 0;
-  virtual void hset(const std::string, const std::string, const int) const = 0;
+  virtual void hset(const std::string prefix, const std::string key, const float value) const = 0;
   virtual std::map<std::string, float> const &hgetall(std::string prefix) = 0;
 };
 
@@ -32,10 +38,9 @@ private:
 class StlDatabase : public Database {
 public:
   StlDatabase() {}
-  std::map<std::string, float> &hgetall() {
-    std::map<std::string, float> tmp;
-    tmp["azer"] = 123.123;
-    return tmp;
+  std::map<std::string, float> &hgetall(std::string prefix) { return this->data[prefix]; }
+  void hset(const std::string prefix, const std::string key, const float value) {
+    this->data[prefix][key] = value;
   }
 
 private:
