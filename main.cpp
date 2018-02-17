@@ -3,7 +3,7 @@
 //  redis-monitor
 //
 //  Created by Erwan BERNARD on 16/12/2017.
-//  Copyright © 2017 Erwan BERNARD. All rights reserved.
+//  Copyright © 2017, 2018 Erwan BERNARD. All rights reserved.
 //
 
 #include <chrono> // std::chrono::seconds
