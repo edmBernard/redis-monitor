@@ -89,14 +89,15 @@ if(BUILD_UNIT_TESTS)
   enable_testing()
 
   SET(TEST_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-tic.cpp
   )
 
-  add_executable(catch_test ${TEST_SOURCES})
-  target_link_libraries(catch_test -pthread -lz -luv -lssl -lcrypt)
+  add_executable(unit_test ${TEST_SOURCES})
+  target_link_libraries(unit_test -pthread -lz -luv -lssl -lcrypt)
 
-  add_test(NAME "catch_test_default"
-    COMMAND catch_test
+  add_test(NAME "unit_test_default"
+    COMMAND unit_test
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 endif()
