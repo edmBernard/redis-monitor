@@ -70,7 +70,7 @@ SET(SOURCES
 
 #**************************************************************************************************
 # Set compiler **************************************************************************************************
-SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC")
+SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -O3 -fPIC")
 
 
 #**************************************************************************************************
@@ -91,6 +91,8 @@ if(BUILD_UNIT_TESTS)
   SET(TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-tic.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-database.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-monitor.cpp
   )
 
   add_executable(unit_test ${TEST_SOURCES})

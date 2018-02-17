@@ -18,14 +18,16 @@ namespace eb {
 
 class Database {
 public:
-  virtual void hset(const std::string prefix, const std::string key, const float value) const = 0;
-  virtual std::map<std::string, float> const &hgetall(std::string prefix) = 0;
+  virtual void hset(const std::string &prefix, const std::string &key, const float &value) = 0;
+  virtual const std::map<std::string, float> &hgetall(std::string prefix) = 0;
 };
 
 class RocksdbDatabase : public Database {
 public:
-  RocksdbDatabase(std::string path) : path(path) {}
-  std::map<std::string, float> &hgetall() {
+  RocksdbDatabase(std::string path = "/tmp/redis-monitor") : path(path) {}
+  void hset(const std::string &prefix, const std::string &key, const float &value) {
+  }
+  const std::map<std::string, float> &hgetall(std::string prefix) {
     std::map<std::string, float> tmp;
     tmp["azer"] = 123.123;
     return tmp;
@@ -38,10 +40,10 @@ private:
 class StlDatabase : public Database {
 public:
   StlDatabase() {}
-  std::map<std::string, float> &hgetall(std::string prefix) { return this->data[prefix]; }
-  void hset(const std::string prefix, const std::string key, const float value) {
+  void hset(const std::string &prefix, const std::string &key, const float &value) {
     this->data[prefix][key] = value;
   }
+  const std::map<std::string, float> &hgetall(std::string prefix) { return this->data[prefix]; }
 
 private:
   std::map<std::string, std::map<std::string, float>> data;
@@ -63,12 +65,12 @@ class Monitor {
 public:
   Monitor(Database &database, std::string prefix) : database(database), prefix(prefix) {}
   // virtual void add(std::string data, int value) = 0;  // Differe in function of update policy
-  std::map<std::string, float> get() { return database.hgetall(this->prefix); }
+  const std::map<std::string, float> &get() { return database.hgetall(this->prefix); }
+  std::pair<std::string, float> lastData;
 
 protected:
   Database &database;
   std::string prefix;
-  std::pair<std::string, float> lastData;
 };
 
 class MonitorLength : public Monitor {
