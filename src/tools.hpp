@@ -39,13 +39,17 @@ private:
 
 class StlDatabase : public Database {
 public:
+
   StlDatabase() {}
   void hset(const std::string &prefix, const std::string &key, const float &value) {
+    mx.lock();
     this->data[prefix][key] = value;
+    mx.unlock();
   }
   const std::map<std::string, float> &hgetall(std::string prefix) { return this->data[prefix]; }
 
 private:
+  std::mutex mx;
   std::map<std::string, std::map<std::string, float>> data;
 };
 
