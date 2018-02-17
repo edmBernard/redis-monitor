@@ -18,6 +18,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/json/single_include)
 # inja deps
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/inja/src)
 
+# catch deps
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/Catch2/single_include)
+
 # cpp_redis deps
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis EXCLUDE_FROM_ALL)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/includes)
