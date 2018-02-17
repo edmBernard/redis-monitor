@@ -49,7 +49,7 @@ private:
 
 class Tic {
 public:
-  Tic(std::string name) : name(name) {}
+  Tic(std::string name = "default") : name(name) {}
   void incr() { ++this->count; }
   void reset() { this->count = 0; }
   const int get() const { return this->count; }
