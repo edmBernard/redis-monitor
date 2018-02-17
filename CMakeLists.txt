@@ -5,7 +5,6 @@ project(redis-monitor)
 #**************************************************************************************************
 cmake_minimum_required(VERSION 3.5)
 
-
 #**************************************************************************************************
 # Find Package **************************************************************************************************
 
@@ -80,3 +79,24 @@ SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3 -fPIC")
 add_executable(redis-monitor ${SOURCES})
 target_link_libraries(redis-monitor -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})
 add_dependencies(redis-monitor uwebsocket_lib rocksdb_lib)
+
+
+#**************************************************************************************************
+# Test configuration
+#**************************************************************************************************
+option(BUILD_UNIT_TESTS "Build the unit tests" ON)
+if(BUILD_UNIT_TESTS)
+  enable_testing()
+
+  SET(TEST_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test.cpp
+  )
+
+  add_executable(catch_test ${TEST_SOURCES})
+  target_link_libraries(catch_test -pthread -lz -luv -lssl -lcrypt)
+
+  add_test(NAME "catch_test_default"
+    COMMAND catch_test
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  )
+endif()
