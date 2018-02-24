@@ -9,7 +9,6 @@
 #include <chrono> // std::chrono::seconds
 #include <fstream>
 #include <iostream>
-#include <mutex>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
@@ -19,10 +18,6 @@
 // clang-format off
 #include "nlohmann/json.hpp"
 #include "inja.hpp"
-#include "rocksdb/db.h"
-#include "rocksdb/options.h"
-#include "rocksdb/slice.h"
-#include "rocksdb/slice_transform.h"
 #include "database.hpp"
 #include "monitor.hpp"
 #include <cpp_redis/cpp_redis>
@@ -31,8 +26,6 @@
 // clang-format on
 
 using json = nlohmann::json;
-
-std::mutex g_data_mutex;
 
 std::time_t convertStrToTime(std::string stime) {
   std::tm tm;
@@ -49,7 +42,7 @@ std::string convertTimeToStr(std::time_t time) {
 }
 
 void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> keys, std::vector<std::string> patterns,
-                         rocksdb::DB *db, uWS::Hub *h, int rate) {
+                         eb::MonitorLength *lengthMonitors, eb::MonitorFrequency *frequencyMonitors, uWS::Hub *h, int rate) {
 
   while (true) {
     std::this_thread::sleep_for(std::chrono::seconds(rate));
@@ -58,45 +51,32 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
     new_data["date"] = convertTimeToStr(t);
 
     // Process key length
-    json new_data_key = json::array();
     for (unsigned int i = 0; i < keys.size(); ++i) {
-      client->llen(keys[i], [i, keys, db, t, &new_data_key](cpp_redis::reply &reply) {
-        std::ostringstream ss;
-        ss << "k" << std::setw(3) << std::setfill('0') << i;
-        json tmp;
-        tmp["id"] = keys[i];
-        tmp["value"] = reply.as_integer();
-        new_data_key.push_back(tmp);
-        g_data_mutex.lock();
-        db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), std::to_string(reply.as_integer()));
-        g_data_mutex.unlock();
+      client->llen(keys[i], [i, keys, lengthMonitors, t](cpp_redis::reply &reply) {
+        lengthMonitors[i].add(convertTimeToStr(t), std::to_string(reply.as_integer()));
       });
     }
 
     client->sync_commit();
 
     // Process pattern publish
-    json new_data_pattern = json::array();
     for (unsigned int i = 0; i < patterns.size(); ++i) {
-      std::ostringstream ssc;
-      ssc << "c" << std::setw(3) << std::setfill('0') << i;
-      std::ostringstream ssp;
-      ssp << "p" << std::setw(3) << std::setfill('0') << i;
-      std::string value;
-
-      g_data_mutex.lock();
-      db->Get(rocksdb::ReadOptions(), ssc.str(), &value);
-      json tmp;
-      tmp["id"] = patterns[i];
-      tmp["value"] = value;
-      new_data_pattern.push_back(tmp);
-      db->Put(rocksdb::WriteOptions(), ssp.str() + convertTimeToStr(t), value);
-      db->Put(rocksdb::WriteOptions(), ssc.str(), "0");
-      g_data_mutex.unlock();
+      frequencyMonitors[i].add(convertTimeToStr(t));
     }
 
-    new_data["patterns"] = new_data_pattern;
-    new_data["keys"] = new_data_key;
+    for (unsigned int i = 0; i < keys.size(); ++i) {
+      json tmp;
+      tmp["id"] = keys[i];
+      tmp["value"] = lengthMonitors[i].lastData.second;
+      new_data["keys"].push_back(tmp);
+    }
+
+    for (unsigned int i = 0; i < patterns.size(); ++i) {
+      json tmp;
+      tmp["id"] = keys[i];
+      tmp["value"] = frequencyMonitors[i].lastData.second;
+      new_data["patterns"].push_back(tmp);
+    }
 
     std::string data_string = new_data.dump();
     h->getDefaultGroup<uWS::SERVER>().broadcast(data_string.data(), data_string.length(), uWS::TEXT);
@@ -163,42 +143,24 @@ int main(int argc, char *argv[]) {
 
     // =================================================================================================
     // Configure RocksDB
-    rocksdb::DB *db;
-    rocksdb::Options DBOptions;
-    DBOptions.IncreaseParallelism();
+    eb::RocksdbDatabase database(result["rocksdb-path"].as<std::string>());
+    std::vector<eb::MonitorLength> lengthMonitors;
+    std::vector<eb::MonitorFrequency> frequencyMonitors;
 
-    DBOptions.prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(4));
-    // create the DB if it's not already present
-    DBOptions.create_if_missing = true;
-    std::string kDBPath = result["rocksdb-path"].as<std::string>();
-    rocksdb::Status s = rocksdb::DB::Open(DBOptions, kDBPath, &db);
-    if (!s.ok())
-      std::cerr << s.ToString() << std::endl;
-
-    // add null data in graph to separate data from previous session
     std::time_t t = std::time(nullptr);
 
     for (unsigned int i = 0; i < keys.size(); ++i) {
-      std::ostringstream ss;
-      ss << "k" << std::setw(3) << std::setfill('0') << i;
-
-      g_data_mutex.lock();
-      db->Put(rocksdb::WriteOptions(), ss.str() + convertTimeToStr(t), "null");
-      g_data_mutex.unlock();
+      // create monitor
+      lengthMonitors.push_back(eb::MonitorLength(database, i));
+      // add null data in graph to separate data from previous session
+      lengthMonitors[i].addSeparator(convertTimeToStr(t));
     }
 
     for (unsigned int i = 0; i < patterns.size(); ++i) {
-      std::ostringstream ssc;
-      ssc << "c" << std::setw(3) << std::setfill('0') << i;
-      std::ostringstream ssp;
-      ssp << "p" << std::setw(3) << std::setfill('0') << i;
-      std::string value;
-
-      g_data_mutex.lock();
-      db->Put(rocksdb::WriteOptions(), ssp.str() + convertTimeToStr(t), "null");
-      // Counter initialisation at start to remove old counter value
-      db->Put(rocksdb::WriteOptions(), ssc.str(), "0");
-      g_data_mutex.unlock();
+      // create monitor
+      frequencyMonitors.push_back(eb::MonitorFrequency(database, i));
+      // add null data in graph to separate data from previous session
+      frequencyMonitors[i].addSeparator(convertTimeToStr(t));
     }
 
     // =================================================================================================
@@ -229,15 +191,8 @@ int main(int argc, char *argv[]) {
 
     for (unsigned int i = 0; i < patterns.size(); ++i) {
       // redis pattern subsciption on pubsub we increment counter of specific pattern
-      sub->psubscribe(patterns[i], [i, db](const std::string &chan, const std::string &msg) {
-        std::ostringstream ss;
-        ss << "c" << std::setw(3) << std::setfill('0') << i;
-        std::string value;
-
-        g_data_mutex.lock();
-        db->Get(rocksdb::ReadOptions(), ss.str(), &value);
-        db->Put(rocksdb::WriteOptions(), ss.str(), std::to_string(std::stoi(value) + 1));
-        g_data_mutex.unlock();
+      sub->psubscribe(patterns[i], [i, &frequencyMonitors](const std::string &chan, const std::string &msg) {
+        frequencyMonitors[i].incr();
       });
     }
 
@@ -257,7 +212,7 @@ int main(int argc, char *argv[]) {
     // Web Server
     uWS::Hub h;
     h.onHttpRequest(
-        [rendered, keys, patterns, db](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+        [rendered, keys, patterns, &lengthMonitors, &frequencyMonitors](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
           // Temp string because regex_match don't allow versatile string get by toString
           std::string url_temp = req.getUrl().toString();
           // Routing
@@ -286,20 +241,14 @@ int main(int argc, char *argv[]) {
 
             json data = json::array();
 
-            auto iter = db->NewIterator(rocksdb::ReadOptions());
-
             for (unsigned int i = 0; i < keys.size(); ++i) {
+              auto tmp = lengthMonitors[i].get();
               json temp;
               json abscisse = json::array();
               json ordinate = json::array();
-              std::ostringstream ss;
-              ss << "k" << std::setw(3) << std::setfill('0') << i;
-              rocksdb::Slice prefix = ss.str();
-
-              for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
-                std::string tmp = iter->key().ToString();
-                abscisse.push_back(tmp.substr(4, tmp.size()));
-                ordinate.push_back(iter->value().ToString());
+              for (auto &&it = tmp.begin(); it != tmp.end(); it++) {
+                abscisse.push_back(it->first);
+                ordinate.push_back(it->second);
               }
 
               temp["id"] = keys[i];
@@ -315,23 +264,17 @@ int main(int argc, char *argv[]) {
 
             json data = json::array();
 
-            auto iter = db->NewIterator(rocksdb::ReadOptions());
-
             for (unsigned int i = 0; i < patterns.size(); ++i) {
+              auto tmp = frequencyMonitors[i].get();
               json temp;
               json abscisse = json::array();
               json ordinate = json::array();
-              std::ostringstream ss;
-              ss << "p" << std::setw(3) << std::setfill('0') << i;
-              rocksdb::Slice prefix = ss.str();
-
-              for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
-                std::string tmp = iter->key().ToString();
-                abscisse.push_back(tmp.substr(4, tmp.size()));
-                ordinate.push_back(iter->value().ToString());
+              for (auto &&it = tmp.begin(); it != tmp.end(); it++) {
+                abscisse.push_back(it->first);
+                ordinate.push_back(it->second);
               }
 
-              temp["id"] = patterns[i];
+              temp["id"] = keys[i];
               temp["abscisse"] = abscisse;
               temp["ordinate"] = ordinate;
               data.push_back(temp);
@@ -358,7 +301,7 @@ int main(int argc, char *argv[]) {
     });
 
     // Spawn thread to listen redis periodically, update publish speed and send websocket to client
-    std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, db, &h, result["update-rate"].as<int>());
+    std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, &lengthMonitors, &frequencyMonitors, &h, result["update-rate"].as<int>());
 
     h.getDefaultGroup<uWS::SERVER>().startAutoPing(30000);
     if (h.listen(3000)) {
@@ -370,7 +313,6 @@ int main(int argc, char *argv[]) {
 
     h.run();
 
-    delete db;
     delete client;
     delete sub;
 
