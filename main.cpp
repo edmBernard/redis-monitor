@@ -248,7 +248,6 @@ int main(int argc, char *argv[]) {
               json abscisse = json::array();
               json ordinate = json::array();
               for (auto &&it = tmp.begin(); it != tmp.end(); it++) {
-                std::cout << "it->first << it->second :" << it->first << " " << it->second << std::endl;
                 abscisse.push_back(it->first);
                 ordinate.push_back(it->second);
               }
@@ -272,7 +271,6 @@ int main(int argc, char *argv[]) {
               json abscisse = json::array();
               json ordinate = json::array();
               for (auto &&it = tmp.begin(); it != tmp.end(); it++) {
-                std::cout << "it->first << it->second :" << it->first << " " << it->second << std::endl;
                 abscisse.push_back(it->first);
                 ordinate.push_back(it->second);
               }

@@ -78,8 +78,6 @@ public:
 
     for (iter->Seek(rdb_prefix); iter->Valid() && iter->key().starts_with(rdb_prefix); iter->Next()) {
       std::string tmp = iter->key().ToString();
-      std::cout << "tmp :" << tmp << std::endl;
-      std::cout << "tmp.substr(this->prefixLength, tmp.size()) :" << tmp.substr(this->prefixLength, tmp.size()) << std::endl;
       (this->tmpData)[tmp.substr(this->prefixLength, tmp.size())] = iter->value().ToString();
     }
 
