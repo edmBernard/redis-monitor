@@ -2,7 +2,7 @@
 #include "database.hpp"
 
 TEST_CASE("stl database random prefix", "[Database]") {
-  eb::StlDatabase database;
+  rm::StlDatabase database;
 
   database.hset("prefix1", "key1", "11");
   REQUIRE(database.hgetall("prefix1").at("key1") == "11");
@@ -16,7 +16,7 @@ TEST_CASE("stl database random prefix", "[Database]") {
 }
 
 TEST_CASE("stl database prefix", "[Database]") {
-  eb::StlDatabase database;
+  rm::StlDatabase database;
 
   REQUIRE(database.buildPrefix('c', 1) == "c001");
 
@@ -28,7 +28,7 @@ TEST_CASE("stl database prefix", "[Database]") {
 }
 
 TEST_CASE("stl database normalized prefix", "[Database]") {
-  eb::StlDatabase database;
+  rm::StlDatabase database;
 
   database.hset(database.buildPrefix('a', 1), "key1", "11");
   REQUIRE(database.hgetall(database.buildPrefix('a', 1)).at("key1") == "11");
@@ -42,7 +42,7 @@ TEST_CASE("stl database normalized prefix", "[Database]") {
 }
 
 TEST_CASE("rocksdb database normalized prefix", "[Database]") {
-  eb::RocksdbDatabase database;
+  rm::RocksdbDatabase database;
 
   database.hset(database.buildPrefix('a', 1), "key1", "11");
   REQUIRE(database.hgetall(database.buildPrefix('a', 1)).at("key1") == "11");

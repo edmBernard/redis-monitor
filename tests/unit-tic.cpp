@@ -3,7 +3,7 @@
 
 TEST_CASE("unique counter", "[Tic]") {
 
-  eb::Tic counter;
+  rm::Tic counter;
   REQUIRE(counter.get() == 0);
 
   counter.incr();
@@ -22,8 +22,8 @@ TEST_CASE("unique counter", "[Tic]") {
 
 TEST_CASE("multiple counter entanglement", "[Tic]") {
 
-  eb::Tic counter1;
-  eb::Tic counter2;
+  rm::Tic counter1;
+  rm::Tic counter2;
   REQUIRE(counter1.get() == 0);
   counter1.incr();
   REQUIRE(counter1.get() == 1);

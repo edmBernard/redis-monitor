@@ -22,7 +22,7 @@
 
 using json = nlohmann::json;
 
-namespace eb {
+namespace rm {
 
 class Tic {
 public:
@@ -79,6 +79,6 @@ private:
   Tic counter;
 };
 
-}; // namespace eb
+}; // namespace rm
 
 #endif // !TOOLS_HPP_

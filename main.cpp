@@ -42,7 +42,7 @@ std::string convertTimeToStr(std::time_t time) {
 }
 
 void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> keys, std::vector<std::string> patterns,
-                         std::vector<eb::MonitorLength> &lengthMonitors, std::vector<eb::MonitorFrequency> &frequencyMonitors, uWS::Hub *h, int rate) {
+                         std::vector<rm::MonitorLength> &lengthMonitors, std::vector<rm::MonitorFrequency> &frequencyMonitors, uWS::Hub *h, int rate) {
 
   while (true) {
     std::this_thread::sleep_for(std::chrono::seconds(rate));
@@ -143,23 +143,23 @@ int main(int argc, char *argv[]) {
 
     // =================================================================================================
     // Configure RocksDB
-    eb::RocksdbDatabase database(result["rocksdb-path"].as<std::string>());
-    // eb::StlDatabase database;
-    std::vector<eb::MonitorLength> lengthMonitors;
-    std::vector<eb::MonitorFrequency> frequencyMonitors;
+    rm::RocksdbDatabase database(result["rocksdb-path"].as<std::string>());
+    // rm::StlDatabase database;
+    std::vector<rm::MonitorLength> lengthMonitors;
+    std::vector<rm::MonitorFrequency> frequencyMonitors;
 
     std::time_t t = std::time(nullptr);
 
     for (unsigned int i = 0; i < keys.size(); ++i) {
       // create monitor
-      lengthMonitors.push_back(eb::MonitorLength(database, i));
+      lengthMonitors.push_back(rm::MonitorLength(database, i));
       // add null data in graph to separate data from previous session
       lengthMonitors[i].addSeparator(convertTimeToStr(t));
     }
 
     for (unsigned int i = 0; i < patterns.size(); ++i) {
       // create monitor
-      frequencyMonitors.push_back(eb::MonitorFrequency(database, i));
+      frequencyMonitors.push_back(rm::MonitorFrequency(database, i));
       // add null data in graph to separate data from previous session
       frequencyMonitors[i].addSeparator(convertTimeToStr(t));
     }

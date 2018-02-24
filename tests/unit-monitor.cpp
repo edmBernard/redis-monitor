@@ -4,8 +4,8 @@
 #include "monitor.hpp"
 
 TEST_CASE("MonitorLength with stl database", "[Monitor]") {
-  eb::StlDatabase database;
-  eb::MonitorLength monitor(database, 1);
+  rm::StlDatabase database;
+  rm::MonitorLength monitor(database, 1);
 
   monitor.add("MYDATE1", "1");
   SECTION("get from monitor") {
@@ -28,8 +28,8 @@ TEST_CASE("MonitorLength with stl database", "[Monitor]") {
 }
 
 TEST_CASE("MonitorLength with stl database and build in prefix", "[Monitor]") {
-  eb::StlDatabase database;
-  eb::MonitorLength monitor(database, 2);
+  rm::StlDatabase database;
+  rm::MonitorLength monitor(database, 2);
 
   monitor.add("MYDATE1", "1");
   SECTION("get from monitor") {
@@ -52,10 +52,10 @@ TEST_CASE("MonitorLength with stl database and build in prefix", "[Monitor]") {
 }
 
 TEST_CASE("multi MonitorLength with stl database", "[Monitor]") {
-  eb::StlDatabase database;
-  eb::MonitorLength monitor1(database, 1);
-  eb::MonitorLength monitor2(database, 2);
-  eb::MonitorLength monitor3(database, 3);
+  rm::StlDatabase database;
+  rm::MonitorLength monitor1(database, 1);
+  rm::MonitorLength monitor2(database, 2);
+  rm::MonitorLength monitor3(database, 3);
 
   monitor1.add("MYDATE1", "1");
   monitor2.add("MYDATE1", "2");
@@ -79,8 +79,8 @@ TEST_CASE("multi MonitorLength with stl database", "[Monitor]") {
 }
 
 TEST_CASE("MonitorLength with rocks database and build in prefix", "[Monitor]") {
-  eb::RocksdbDatabase database("/tmp/redis_monitor", true);
-  eb::MonitorLength monitor(database, 1);
+  rm::RocksdbDatabase database("/tmp/redis_monitor", true);
+  rm::MonitorLength monitor(database, 1);
 
   monitor.add("MYDATE1", "1");
   SECTION("get from monitor") {
@@ -103,10 +103,10 @@ TEST_CASE("MonitorLength with rocks database and build in prefix", "[Monitor]") 
 }
 
 TEST_CASE("multi MonitorLength with rocks database", "[Monitor]") {
-  eb::RocksdbDatabase database("/tmp/redis_monitor", true);
-  eb::MonitorLength monitor1(database, 1);
-  eb::MonitorLength monitor2(database, 2);
-  eb::MonitorLength monitor3(database, 3);
+  rm::RocksdbDatabase database("/tmp/redis_monitor", true);
+  rm::MonitorLength monitor1(database, 1);
+  rm::MonitorLength monitor2(database, 2);
+  rm::MonitorLength monitor3(database, 3);
 
   monitor1.add("MYDATE1", "1");
   monitor2.add("MYDATE1", "2");

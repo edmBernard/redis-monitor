@@ -25,7 +25,7 @@
 
 using json = nlohmann::json;
 
-namespace eb {
+namespace rm {
 
 class Database {
 public:
@@ -105,6 +105,6 @@ private:
   std::map<std::string, std::map<std::string, std::string>> data;
 };
 
-}; // namespace eb
+}; // namespace rm
 
 #endif // !DATABASE_HPP_
