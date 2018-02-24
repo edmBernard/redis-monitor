@@ -23,7 +23,8 @@
 #include "rocksdb/options.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/slice_transform.h"
-#include "tools.hpp"
+#include "database.hpp"
+#include "monitor.hpp"
 #include <cpp_redis/cpp_redis>
 #include <cxxopts.hpp>
 #include <uWS.h>

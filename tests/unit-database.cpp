@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "tools.hpp"
+#include "database.hpp"
 
 TEST_CASE("stl database random prefix", "[Database]") {
   eb::StlDatabase database;

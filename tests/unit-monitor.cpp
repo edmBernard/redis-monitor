@@ -1,20 +1,13 @@
 #include "catch.hpp"
-#include "rocksdb/db.h"
-#include "rocksdb/options.h"
-#include "rocksdb/slice.h"
-#include "rocksdb/slice_transform.h"
-#include "tools.hpp"
+
+#include "database.hpp"
+#include "monitor.hpp"
 
 TEST_CASE("MonitorLength with stl database", "[Monitor]") {
   eb::StlDatabase database;
-  eb::MonitorLength monitor(database, "prefix1");
+  eb::MonitorLength monitor(database, 1);
 
   monitor.add("MYDATE1", 1);
-  SECTION("get from database") {
-    REQUIRE(database.hgetall("prefix1").count("MYDATE1") == 1);
-    REQUIRE(database.hgetall("prefix1").count("MYDATE2") == 0);
-    REQUIRE(database.hgetall("prefix1").at("MYDATE1") == 1);
-  }
   SECTION("get from monitor") {
     REQUIRE(monitor.get().count("MYDATE1") == 1);
     REQUIRE(monitor.get().count("MYDATE2") == 0);
@@ -24,11 +17,6 @@ TEST_CASE("MonitorLength with stl database", "[Monitor]") {
   }
   SECTION("multi key") {
     monitor.add("MYDATE2", 2);
-    SECTION("get from database") {
-      REQUIRE(database.hgetall("prefix1").count("MYDATE1") == 1);
-      REQUIRE(database.hgetall("prefix1").count("MYDATE2") == 1);
-      REQUIRE(database.hgetall("prefix1").at("MYDATE2") == 2);
-    }
     SECTION("get from monitor") {
       REQUIRE(monitor.get().count("MYDATE1") == 1);
       REQUIRE(monitor.get().count("MYDATE2") == 1);
@@ -41,14 +29,9 @@ TEST_CASE("MonitorLength with stl database", "[Monitor]") {
 
 TEST_CASE("MonitorLength with stl database and build in prefix", "[Monitor]") {
   eb::StlDatabase database;
-  eb::MonitorLength monitor(database, database.buildPrefix('c', 1));
+  eb::MonitorLength monitor(database, 2);
 
   monitor.add("MYDATE1", 1);
-  SECTION("get from database") {
-    REQUIRE(database.hgetall(database.buildPrefix('c', 1)).count("MYDATE1") == 1);
-    REQUIRE(database.hgetall(database.buildPrefix('c', 1)).count("MYDATE2") == 0);
-    REQUIRE(database.hgetall(database.buildPrefix('c', 1)).at("MYDATE1") == 1);
-  }
   SECTION("get from monitor") {
     REQUIRE(monitor.get().count("MYDATE1") == 1);
     REQUIRE(monitor.get().count("MYDATE2") == 0);
@@ -58,11 +41,6 @@ TEST_CASE("MonitorLength with stl database and build in prefix", "[Monitor]") {
   }
   SECTION("multi key") {
     monitor.add("MYDATE2", 2);
-    SECTION("get from database") {
-      REQUIRE(database.hgetall(database.buildPrefix('c', 1)).count("MYDATE1") == 1);
-      REQUIRE(database.hgetall(database.buildPrefix('c', 1)).count("MYDATE2") == 1);
-      REQUIRE(database.hgetall(database.buildPrefix('c', 1)).at("MYDATE2") == 2);
-    }
     SECTION("get from monitor") {
       REQUIRE(monitor.get().count("MYDATE1") == 1);
       REQUIRE(monitor.get().count("MYDATE2") == 1);
@@ -75,9 +53,9 @@ TEST_CASE("MonitorLength with stl database and build in prefix", "[Monitor]") {
 
 TEST_CASE("multi MonitorLength with stl database", "[Monitor]") {
   eb::StlDatabase database;
-  eb::MonitorLength monitor1(database, database.buildPrefix('c', 1));
-  eb::MonitorLength monitor2(database, database.buildPrefix('c', 2));
-  eb::MonitorLength monitor3(database, database.buildPrefix('d', 3));
+  eb::MonitorLength monitor1(database, 1);
+  eb::MonitorLength monitor2(database, 2);
+  eb::MonitorLength monitor3(database, 3);
 
   monitor1.add("MYDATE1", 1);
   monitor2.add("MYDATE1", 2);
@@ -102,14 +80,9 @@ TEST_CASE("multi MonitorLength with stl database", "[Monitor]") {
 
 TEST_CASE("MonitorLength with rocks database and build in prefix", "[Monitor]") {
   eb::RocksdbDatabase database("/tmp/redis_monitor", true);
-  eb::MonitorLength monitor(database, database.buildPrefix('c', 1));
+  eb::MonitorLength monitor(database, 1);
 
   monitor.add("MYDATE1", 1);
-  SECTION("get from database") {
-    REQUIRE(database.hgetall(database.buildPrefix('c', 1)).count("MYDATE1") == 1);
-    REQUIRE(database.hgetall(database.buildPrefix('c', 1)).count("MYDATE2") == 0);
-    REQUIRE(database.hgetall(database.buildPrefix('c', 1)).at("MYDATE1") == 1);
-  }
   SECTION("get from monitor") {
     REQUIRE(monitor.get().count("MYDATE1") == 1);
     REQUIRE(monitor.get().count("MYDATE2") == 0);
@@ -119,11 +92,6 @@ TEST_CASE("MonitorLength with rocks database and build in prefix", "[Monitor]") 
   }
   SECTION("multi key") {
     monitor.add("MYDATE2", 2);
-    SECTION("get from database") {
-      REQUIRE(database.hgetall(database.buildPrefix('c', 1)).count("MYDATE1") == 1);
-      REQUIRE(database.hgetall(database.buildPrefix('c', 1)).count("MYDATE2") == 1);
-      REQUIRE(database.hgetall(database.buildPrefix('c', 1)).at("MYDATE2") == 2);
-    }
     SECTION("get from monitor") {
       REQUIRE(monitor.get().count("MYDATE1") == 1);
       REQUIRE(monitor.get().count("MYDATE2") == 1);
