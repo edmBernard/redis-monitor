@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     // Parse command line options
     cxxopts::Options options(argv[0], "A simple monitoring for redis database");
     options.positional_help("[optional args]").show_positional_help();
-// clang-format off
+    // clang-format off
     options.add_options()
       ("help", "Print help")
       ("h, host", "redis server hostname",
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
         cxxopts::value<std::vector<std::string>>(), "PATTERN")
       ("k, key", "Keys to monitor",
         cxxopts::value<std::vector<std::string>>(), "KEYS");
-// clang-format on
+    // clang-format on
 
     auto result = options.parse(argc, argv);
 

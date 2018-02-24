@@ -89,14 +89,15 @@ if(BUILD_UNIT_TESTS)
   enable_testing()
 
   SET(TEST_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-tic.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-database.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-monitor.cpp
   )
 
   add_executable(unit_test ${TEST_SOURCES})
-  target_link_libraries(unit_test -pthread -lz -luv -lssl -lcrypt)
+  target_link_libraries(unit_test -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})
+  add_dependencies(unit_test uwebsocket_lib rocksdb_lib)
 
   add_test(NAME "unit_test_default"
     COMMAND unit_test
