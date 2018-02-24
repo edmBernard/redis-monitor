@@ -42,7 +42,7 @@ std::string convertTimeToStr(std::time_t time) {
 }
 
 void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> keys, std::vector<std::string> patterns,
-                         eb::MonitorLength *lengthMonitors, eb::MonitorFrequency *frequencyMonitors, uWS::Hub *h, int rate) {
+                         std::vector<eb::MonitorLength> &lengthMonitors, std::vector<eb::MonitorFrequency> &frequencyMonitors, uWS::Hub *h, int rate) {
 
   while (true) {
     std::this_thread::sleep_for(std::chrono::seconds(rate));
@@ -52,7 +52,7 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
 
     // Process key length
     for (unsigned int i = 0; i < keys.size(); ++i) {
-      client->llen(keys[i], [i, keys, lengthMonitors, t](cpp_redis::reply &reply) {
+      client->llen(keys[i], [i, keys, &lengthMonitors, t](cpp_redis::reply &reply) {
         lengthMonitors[i].add(convertTimeToStr(t), std::to_string(reply.as_integer()));
       });
     }
@@ -73,7 +73,7 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
 
     for (unsigned int i = 0; i < patterns.size(); ++i) {
       json tmp;
-      tmp["id"] = keys[i];
+      tmp["id"] = patterns[i];
       tmp["value"] = frequencyMonitors[i].lastData.second;
       new_data["patterns"].push_back(tmp);
     }
@@ -143,7 +143,8 @@ int main(int argc, char *argv[]) {
 
     // =================================================================================================
     // Configure RocksDB
-    eb::RocksdbDatabase database(result["rocksdb-path"].as<std::string>());
+    // eb::RocksdbDatabase database(result["rocksdb-path"].as<std::string>());
+    eb::StlDatabase database;
     std::vector<eb::MonitorLength> lengthMonitors;
     std::vector<eb::MonitorFrequency> frequencyMonitors;
 
@@ -247,6 +248,7 @@ int main(int argc, char *argv[]) {
               json abscisse = json::array();
               json ordinate = json::array();
               for (auto &&it = tmp.begin(); it != tmp.end(); it++) {
+                std::cout << "it->first << it->second :" << it->first << " " << it->second << std::endl;
                 abscisse.push_back(it->first);
                 ordinate.push_back(it->second);
               }
@@ -274,7 +276,7 @@ int main(int argc, char *argv[]) {
                 ordinate.push_back(it->second);
               }
 
-              temp["id"] = keys[i];
+              temp["id"] = patterns[i];
               temp["abscisse"] = abscisse;
               temp["ordinate"] = ordinate;
               data.push_back(temp);
@@ -301,7 +303,7 @@ int main(int argc, char *argv[]) {
     });
 
     // Spawn thread to listen redis periodically, update publish speed and send websocket to client
-    std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, &lengthMonitors, &frequencyMonitors, &h, result["update-rate"].as<int>());
+    std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, std::ref(lengthMonitors), std::ref(frequencyMonitors), &h, result["update-rate"].as<int>());
 
     h.getDefaultGroup<uWS::SERVER>().startAutoPing(30000);
     if (h.listen(3000)) {
