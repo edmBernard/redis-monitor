@@ -34,6 +34,5 @@ Rocks database store all processed data:
 - `c + 000` : counter to track # of pub for the first pattern
 
 TODO:
-- Clean code 
-- Add abstraction for rocksdb to be able to desactivate it (persistance) and only using standard C++ type (map/vector)
-- Add 3 letters alias for keys in command line currently key alias in database is its index in command line 
+- Clean code
+- Add 3 letters alias for keys in command line currently key alias in database is its index in command line
