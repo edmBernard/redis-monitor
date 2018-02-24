@@ -40,10 +40,13 @@ class Monitor {
 public:
   Monitor(Database &database, int prefix, char letter = 'a') : database(database), prefix(this->database.buildPrefix(letter, prefix)) {}
   // virtual void add(std::string data, int value) = 0;  // Differe in function of update policy
-  const std::map<std::string, float> &get() {
+  void addSeparator(std::string date) {
+    this->database.hset(this->prefix, date, "null");
+  }
+  const std::map<std::string, std::string> &get() {
     return database.hgetall(this->prefix);
   }
-  std::pair<std::string, float> lastData;
+  std::pair<std::string, std::string> lastData;
 
 protected:
   char letter;
@@ -55,7 +58,7 @@ class MonitorLength : public Monitor {
 public:
   MonitorLength(Database &database, int prefix) : Monitor(database, prefix, 'm') {}
 
-  void add(std::string date, int keyLength) {
+  void add(std::string date, std::string keyLength) {
     this->lastData = {date, keyLength};
     this->database.hset(this->prefix, date, keyLength);
   };
@@ -65,10 +68,10 @@ class MonitorFrequency : public Monitor {
 public:
   MonitorFrequency(Database &database, int prefix) : Monitor(database, prefix, 'f'), counter(this->database.buildPrefix('f', prefix)) {}
 
-  void incr(std::string date, float value) { this->counter.incr(); };
+  void incr() { this->counter.incr(); };
   void add(std::string date) {
-    this->lastData = {date, this->counter.get()};
-    database.hset(this->prefix, date, this->counter.get());
+    this->lastData = {date, std::to_string(this->counter.get())};
+    database.hset(this->prefix, date, std::to_string(this->counter.get()));
     this->counter.reset();
   };
 

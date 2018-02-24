@@ -29,9 +29,9 @@ namespace eb {
 
 class Database {
 public:
-  virtual void hset(const std::string &prefix, const std::string &key, const float &value) = 0;
+  virtual void hset(const std::string &prefix, const std::string &key, const std::string &value) = 0;
 
-  virtual const std::map<std::string, float> &hgetall(std::string prefix) = 0;
+  virtual const std::map<std::string, std::string> &hgetall(std::string prefix) = 0;
 
   std::string buildPrefix(char letter, int i) {
     std::ostringstream ss;
@@ -66,18 +66,18 @@ public:
     delete db;
   }
 
-  void hset(const std::string &prefix, const std::string &key, const float &value) {
-    this->db->Put(rocksdb::WriteOptions(), prefix + key, std::to_string(value));
+  void hset(const std::string &prefix, const std::string &key, const std::string &value) {
+    this->db->Put(rocksdb::WriteOptions(), prefix + key, value);
   }
 
-  const std::map<std::string, float> &hgetall(std::string prefix) {
+  const std::map<std::string, std::string> &hgetall(std::string prefix) {
     auto iter = db->NewIterator(rocksdb::ReadOptions());
     rocksdb::Slice rdb_prefix = prefix;
-    std::shared_ptr<std::map<std::string, float> > output_map(new std::map<std::string, float>);
+    std::shared_ptr<std::map<std::string, std::string> > output_map(new std::map<std::string, std::string>);
 
     for (iter->Seek(rdb_prefix); iter->Valid() && iter->key().starts_with(rdb_prefix); iter->Next()) {
       std::string tmp = iter->key().ToString();
-      (*output_map)[tmp.substr(this->prefixLength, tmp.size())] = std::stof(iter->value().ToString());
+      (*output_map)[tmp.substr(this->prefixLength, tmp.size())] = iter->value().ToString();
     }
 
     return *output_map;
@@ -91,16 +91,16 @@ private:
 class StlDatabase : public Database {
 public:
   StlDatabase() {}
-  void hset(const std::string &prefix, const std::string &key, const float &value) {
+  void hset(const std::string &prefix, const std::string &key, const std::string &value) {
     mx.lock();
     this->data[prefix][key] = value;
     mx.unlock();
   }
-  const std::map<std::string, float> &hgetall(std::string prefix) { return this->data[prefix]; }
+  const std::map<std::string, std::string> &hgetall(std::string prefix) { return this->data[prefix]; }
 
 private:
   std::mutex mx;
-  std::map<std::string, std::map<std::string, float>> data;
+  std::map<std::string, std::map<std::string, std::string>> data;
 };
 
 }; // namespace eb
