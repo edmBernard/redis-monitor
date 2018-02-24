@@ -73,19 +73,23 @@ public:
   const std::map<std::string, std::string> &hgetall(std::string prefix) {
     auto iter = db->NewIterator(rocksdb::ReadOptions());
     rocksdb::Slice rdb_prefix = prefix;
-    std::shared_ptr<std::map<std::string, std::string> > output_map(new std::map<std::string, std::string>);
+
+    this->tmpData.clear();
 
     for (iter->Seek(rdb_prefix); iter->Valid() && iter->key().starts_with(rdb_prefix); iter->Next()) {
       std::string tmp = iter->key().ToString();
-      (*output_map)[tmp.substr(this->prefixLength, tmp.size())] = iter->value().ToString();
+      std::cout << "tmp :" << tmp << std::endl;
+      std::cout << "tmp.substr(this->prefixLength, tmp.size()) :" << tmp.substr(this->prefixLength, tmp.size()) << std::endl;
+      (this->tmpData)[tmp.substr(this->prefixLength, tmp.size())] = iter->value().ToString();
     }
 
-    return *output_map;
+    return this->tmpData;
   }
 
 private:
   std::string path;
   rocksdb::DB *db;
+  std::map<std::string, std::string> tmpData;
 };
 
 class StlDatabase : public Database {
