@@ -26,12 +26,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/includes)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/cpp_redis/tacopie/includes)
 
 # rocksdb deps
-SET(ROCKSDB_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb/librocksdb.a)
+SET(ROCKSDB_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb/librocksdb.so)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb/include)
 
 add_custom_command(
   OUTPUT ${ROCKSDB_LIBS}
-  COMMAND make ROCKSDB_LITE=ON static_lib
+  COMMAND make ROCKSDB_LITE=ON shared_lib
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/modules/rocksdb
 )
 
