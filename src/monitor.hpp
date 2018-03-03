@@ -11,14 +11,13 @@
 #ifndef TOOLS_HPP_
 #define TOOLS_HPP_
 
-
+#include <iostream>
 #include <map>
 #include <mutex>
 #include <string>
-#include <iostream>
 
-#include "nlohmann/json.hpp"
 #include "database.hpp"
+#include "nlohmann/json.hpp"
 
 namespace rm {
 
@@ -36,16 +35,13 @@ private:
 
 class Monitor {
 public:
-  Monitor(Database &database, int prefix, char letter = 'a') : database(database), prefix(this->database.buildPrefix(letter, prefix)) {}
+  Monitor(Database &database, int prefix, char letter = 'a')
+      : database(database), prefix(this->database.buildPrefix(letter, prefix)) {}
   // virtual void add(std::string data, int value) = 0;  // Differe in function of update policy
 
-  void addSeparator(std::string date) {
-    this->database.hset(this->prefix, date, "null");
-  }
+  void addSeparator(std::string date) { this->database.hset(this->prefix, date, "null"); }
 
-  const std::map<std::string, std::string> &get() {
-    return database.hgetall(this->prefix);
-  }
+  const std::map<std::string, std::string> &get() { return database.hgetall(this->prefix); }
 
   nlohmann::json get_json(std::string id) {
     nlohmann::json data;
@@ -85,7 +81,8 @@ public:
 
 class MonitorFrequency : public Monitor {
 public:
-  MonitorFrequency(Database &database, int prefix) : Monitor(database, prefix, 'f'), counter(this->database.buildPrefix('f', prefix)) {}
+  MonitorFrequency(Database &database, int prefix)
+      : Monitor(database, prefix, 'f'), counter(this->database.buildPrefix('f', prefix)) {}
 
   void incr() { this->counter.incr(); };
   void add(std::string date) {

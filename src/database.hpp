@@ -11,11 +11,10 @@
 #ifndef DATABASE_HPP_
 #define DATABASE_HPP_
 
-
+#include <iostream>
 #include <map>
 #include <mutex>
 #include <string>
-#include <iostream>
 
 #include "nlohmann/json.hpp"
 #include "rocksdb/db.h"
@@ -35,7 +34,7 @@ public:
 
   std::string buildPrefix(char letter, int i) {
     std::ostringstream ss;
-    ss << letter << std::setw(this->prefixLength-1) << std::setfill('0') << i;
+    ss << letter << std::setw(this->prefixLength - 1) << std::setfill('0') << i;
     return ss.str();
   }
 
@@ -62,9 +61,7 @@ public:
     }
   }
 
-  ~RocksdbDatabase() {
-    delete db;
-  }
+  ~RocksdbDatabase() { delete db; }
 
   void hset(const std::string &prefix, const std::string &key, const std::string &value) {
     this->db->Put(rocksdb::WriteOptions(), prefix + key, value);

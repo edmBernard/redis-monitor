@@ -42,7 +42,8 @@ std::string convertTimeToStr(std::time_t time) {
 }
 
 void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> keys, std::vector<std::string> patterns,
-                         std::vector<rm::MonitorLength> &lengthMonitors, std::vector<rm::MonitorFrequency> &frequencyMonitors, uWS::Hub *h, int rate) {
+                         std::vector<rm::MonitorLength> &lengthMonitors,
+                         std::vector<rm::MonitorFrequency> &frequencyMonitors, uWS::Hub *h, int rate) {
 
   while (true) {
     std::this_thread::sleep_for(std::chrono::seconds(rate));
@@ -212,62 +213,62 @@ int main(int argc, char *argv[]) {
     // =================================================================================================
     // Web Server
     uWS::Hub h;
-    h.onHttpRequest(
-        [rendered, keys, patterns, &lengthMonitors, &frequencyMonitors](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
-          // Temp string because regex_match don't allow versatile string get by toString
-          std::string url_temp = req.getUrl().toString();
-          // Routing
-          std::regex route_static_file("/(static/.*)");
-          std::regex route_home("/");
-          std::regex route_update_keys("/updatekeys");
-          std::regex route_update_patterns("/updatepatterns");
-          std::smatch pieces_match;
+    h.onHttpRequest([rendered, keys, patterns, &lengthMonitors,
+                     &frequencyMonitors](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+      // Temp string because regex_match don't allow versatile string get by toString
+      std::string url_temp = req.getUrl().toString();
+      // Routing
+      std::regex route_static_file("/(static/.*)");
+      std::regex route_home("/");
+      std::regex route_update_keys("/updatekeys");
+      std::regex route_update_patterns("/updatepatterns");
+      std::smatch pieces_match;
 
-          // Routing static file
-          if (std::regex_match(url_temp, pieces_match, route_static_file)) {
-            std::ifstream in("../" + pieces_match[1].str(), std::ios::in | std::ios::binary);
-            if (in) {
-              std::ostringstream contents;
-              contents << in.rdbuf();
-              in.close();
-              res->end(contents.str().data(), contents.str().length());
-            }
+      // Routing static file
+      if (std::regex_match(url_temp, pieces_match, route_static_file)) {
+        std::ifstream in("../" + pieces_match[1].str(), std::ios::in | std::ios::binary);
+        if (in) {
+          std::ostringstream contents;
+          contents << in.rdbuf();
+          in.close();
+          res->end(contents.str().data(), contents.str().length());
+        }
 
-            // Routing home
-          } else if (std::regex_match(url_temp, pieces_match, route_home)) {
-            res->end(rendered.data(), rendered.length());
+        // Routing home
+      } else if (std::regex_match(url_temp, pieces_match, route_home)) {
+        res->end(rendered.data(), rendered.length());
 
-            // Routing update
-          } else if (std::regex_match(url_temp, pieces_match, route_update_keys)) {
+        // Routing update
+      } else if (std::regex_match(url_temp, pieces_match, route_update_keys)) {
 
-            json data = json::array();
+        json data = json::array();
 
-            for (unsigned int i = 0; i < keys.size(); ++i) {
-              auto tmp = lengthMonitors[i].get_json(keys[i]);
-              data.push_back(tmp);
-            }
+        for (unsigned int i = 0; i < keys.size(); ++i) {
+          auto tmp = lengthMonitors[i].get_json(keys[i]);
+          data.push_back(tmp);
+        }
 
-            std::string data_string = data.dump();
-            res->end(data_string.data(), data_string.length());
+        std::string data_string = data.dump();
+        res->end(data_string.data(), data_string.length());
 
-          } else if (std::regex_match(url_temp, pieces_match, route_update_patterns)) {
+      } else if (std::regex_match(url_temp, pieces_match, route_update_patterns)) {
 
-            json data = json::array();
+        json data = json::array();
 
-            for (unsigned int i = 0; i < patterns.size(); ++i) {
-              auto tmp = frequencyMonitors[i].get_json(patterns[i]);
-              data.push_back(tmp);
-            }
+        for (unsigned int i = 0; i < patterns.size(); ++i) {
+          auto tmp = frequencyMonitors[i].get_json(patterns[i]);
+          data.push_back(tmp);
+        }
 
-            std::string data_string = data.dump();
-            res->end(data_string.data(), data_string.length());
+        std::string data_string = data.dump();
+        res->end(data_string.data(), data_string.length());
 
-            // Routing Nothing
-          } else {
-            // i guess this should be done more gracefully?
-            res->end(nullptr, 0);
-          }
-        });
+        // Routing Nothing
+      } else {
+        // i guess this should be done more gracefully?
+        res->end(nullptr, 0);
+      }
+    });
 
     // =================================================================================================
     // Websocker Server
@@ -280,7 +281,8 @@ int main(int argc, char *argv[]) {
     });
 
     // Spawn thread to listen redis periodically, update publish speed and send websocket to client
-    std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, std::ref(lengthMonitors), std::ref(frequencyMonitors), &h, result["update-rate"].as<int>());
+    std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, std::ref(lengthMonitors),
+                            std::ref(frequencyMonitors), &h, result["update-rate"].as<int>());
 
     h.getDefaultGroup<uWS::SERVER>().startAutoPing(30000);
     if (h.listen(3000)) {
