@@ -37,3 +37,4 @@ Rocks database store all processed data:
 TODO:
 - Clean Test
 - Add 3 letters alias for keys in command line currently key alias in database is its index in command line
+- test chartjs instead of c3js. c3js failed increase memory consumption when tab is inactive or during transition (it's not optimised to realtime update)
