@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="static/billboard.min.css">
     <script src="static/d3.min.js" charset="utf-8"></script>
     <script src="static/billboard.min.js" charset="utf-8"></script>
+    <script src="static/visibility.min.js" charset="utf-8"></script>
 </head>
 
 <body>
@@ -117,11 +118,11 @@
     function httpGetAsync(theUrl, callback)
     {
         var xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function() { 
+        xmlHttp.onreadystatechange = function() {
             if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
                 callback(xmlHttp.responseText);
         }
-        xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+        xmlHttp.open("GET", theUrl, true); // true for asynchronous
         xmlHttp.send(null);
     }
 
@@ -151,33 +152,43 @@
 
     ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port);
 	ws.onmessage = function(e) {
-        let data = JSON.parse(e.data);
+        if (!Visibility.hidden()) {
+            let data = JSON.parse(e.data);
 
-        let columns_to_add = [];
-        for (let i = 0; i < data.keys.length; i++) {
-            columns_to_add.push(["x" + data.keys[i].id].concat(data.date))
-            columns_to_add.push([data.keys[i].id].concat(data.keys[i].value))
-        }
+            let columns_to_add = [];
+            for (let i = 0; i < data.keys.length; i++) {
+                columns_to_add.push(["x" + data.keys[i].id].concat(data.date))
+                columns_to_add.push([data.keys[i].id].concat(data.keys[i].value))
+            }
 
-        chart_keys.flow({
-            columns: columns_to_add,
-            length: 0
-        });
+            chart_keys.flow({
+                columns: columns_to_add,
+                length: 0,
+                duration: 0
+            });
 
-        columns_to_add = [];
-        for (let i = 0; i < data.patterns.length; i++) {
-            columns_to_add.push(["x" + data.patterns[i].id].concat(data.date))
-            columns_to_add.push([data.patterns[i].id].concat(data.patterns[i].value))
-        }
+            columns_to_add = [];
+            for (let i = 0; i < data.patterns.length; i++) {
+                columns_to_add.push(["x" + data.patterns[i].id].concat(data.date))
+                columns_to_add.push([data.patterns[i].id].concat(data.patterns[i].value))
+            }
 
-        chart_patterns.flow({
-            columns: columns_to_add,
-            length: 0
-        });
+            chart_patterns.flow({
+                columns: columns_to_add,
+                length: 0,
+                duration: 0
+            });
+        };
 	};
 	ws.onclose = function() {
 		console.log("disconnected from server");
 	};
+
+    var listener = Visibility.change(function (e, state) {
+        if (!Visibility.hidden()) {
+            window.location.reload();
+        }
+    });
 
     </script>
 </body>
