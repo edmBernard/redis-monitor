@@ -28,7 +28,7 @@
 
 using json = nlohmann::json;
 
-void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> keys, std::vector<std::string> patterns,
+void checkRedisKeyLength(cpp_redis::client &client, std::vector<std::string> keys, std::vector<std::string> patterns,
                          std::vector<rm::MonitorLength> &lengthMonitors,
                          std::vector<rm::MonitorFrequency> &frequencyMonitors, uWS::Hub *h, int rate) {
 
@@ -40,12 +40,12 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
 
     // Process key length
     for (unsigned int i = 0; i < keys.size(); ++i) {
-      client->llen(keys[i], [i, keys, &lengthMonitors, t](cpp_redis::reply &reply) {
+      client.llen(keys[i], [i, keys, &lengthMonitors, t](cpp_redis::reply &reply) {
         lengthMonitors[i].add(timeUtils::convertTimeToStr(t), std::to_string(reply.as_integer()));
       });
     }
 
-    client->sync_commit();
+    client.sync_commit();
 
     // Process pattern publish
     for (unsigned int i = 0; i < patterns.size(); ++i) {
@@ -156,16 +156,16 @@ int main(int argc, char *argv[]) {
 
     // =================================================================================================
     // Listen Redis keys
-    cpp_redis::client *client = new cpp_redis::client();
+    cpp_redis::client client;
 
-    client->connect(result["host"].as<std::string>(), result["port"].as<int>(),
+    client.connect(result["host"].as<std::string>(), result["port"].as<int>(),
                     [](const std::string &host, std::size_t port, cpp_redis::client::connect_state status) {
                       if (status == cpp_redis::client::connect_state::dropped) {
                         std::cout << "client disconnected from " << host << ":" << port << std::endl;
                       }
                     });
 
-    client->auth(result["auth"].as<std::string>());
+    client.auth(result["auth"].as<std::string>());
 
     // =================================================================================================
     // Redis subscriber
@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
     });
 
     // Spawn thread to listen redis periodically, update publish speed and send websocket to client
-    std::thread checkingKey(checkRedisKeyLength, client, keys, patterns, std::ref(lengthMonitors),
+    std::thread checkingKey(checkRedisKeyLength, std::ref(client), keys, patterns, std::ref(lengthMonitors),
                             std::ref(frequencyMonitors), &h, result["update-rate"].as<int>());
 
     h.getDefaultGroup<uWS::SERVER>().startAutoPing(30000);
@@ -282,8 +282,6 @@ int main(int argc, char *argv[]) {
     }
 
     h.run();
-
-    delete client;
 
   } catch (const cxxopts::OptionException &e) {
     std::cout << "error parsing options: " << e.what() << std::endl;
