@@ -80,8 +80,8 @@ private:
 // =================================================================================================
 inline nlohmann::json Monitor::get_json(std::string id) {
   nlohmann::json data;
-  nlohmann::json abscisse = json::array();
-  nlohmann::json ordinate = json::array();
+  nlohmann::json abscisse = nlohmann::json::array();
+  nlohmann::json ordinate = nlohmann::json::array();
 
   auto tmp = this->get();
   for (auto &&it = tmp.begin(); it != tmp.end(); it++) {

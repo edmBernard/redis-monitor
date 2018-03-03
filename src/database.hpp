@@ -22,8 +22,6 @@
 #include "rocksdb/slice.h"
 #include "rocksdb/slice_transform.h"
 
-using json = nlohmann::json;
-
 namespace rm {
 
 // =================================================================================================

@@ -1,3 +1,11 @@
+//
+//  timeUtils.hpp
+//  redis-monitor
+//
+//  Created by Erwan BERNARD on 03/03/2018.
+//  Copyright © 2018 Erwan BERNARD. All rights reserved.
+//
+
 #pragma once
 #ifndef TIME_UTILS_HPP_
 #define TIME_UTILS_HPP_
