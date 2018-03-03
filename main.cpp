@@ -243,19 +243,8 @@ int main(int argc, char *argv[]) {
             json data = json::array();
 
             for (unsigned int i = 0; i < keys.size(); ++i) {
-              auto tmp = lengthMonitors[i].get();
-              json temp;
-              json abscisse = json::array();
-              json ordinate = json::array();
-              for (auto &&it = tmp.begin(); it != tmp.end(); it++) {
-                abscisse.push_back(it->first);
-                ordinate.push_back(it->second);
-              }
-
-              temp["id"] = keys[i];
-              temp["abscisse"] = abscisse;
-              temp["ordinate"] = ordinate;
-              data.push_back(temp);
+              auto tmp = lengthMonitors[i].get_json(keys[i]);
+              data.push_back(tmp);
             }
 
             std::string data_string = data.dump();
@@ -266,19 +255,8 @@ int main(int argc, char *argv[]) {
             json data = json::array();
 
             for (unsigned int i = 0; i < patterns.size(); ++i) {
-              auto tmp = frequencyMonitors[i].get();
-              json temp;
-              json abscisse = json::array();
-              json ordinate = json::array();
-              for (auto &&it = tmp.begin(); it != tmp.end(); it++) {
-                abscisse.push_back(it->first);
-                ordinate.push_back(it->second);
-              }
-
-              temp["id"] = patterns[i];
-              temp["abscisse"] = abscisse;
-              temp["ordinate"] = ordinate;
-              data.push_back(temp);
+              auto tmp = frequencyMonitors[i].get_json(patterns[i]);
+              data.push_back(tmp);
             }
 
             std::string data_string = data.dump();

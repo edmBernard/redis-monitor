@@ -20,8 +20,6 @@
 #include "nlohmann/json.hpp"
 #include "database.hpp"
 
-using json = nlohmann::json;
-
 namespace rm {
 
 class Tic {
@@ -40,12 +38,33 @@ class Monitor {
 public:
   Monitor(Database &database, int prefix, char letter = 'a') : database(database), prefix(this->database.buildPrefix(letter, prefix)) {}
   // virtual void add(std::string data, int value) = 0;  // Differe in function of update policy
+
   void addSeparator(std::string date) {
     this->database.hset(this->prefix, date, "null");
   }
+
   const std::map<std::string, std::string> &get() {
     return database.hgetall(this->prefix);
   }
+
+  nlohmann::json get_json(std::string id) {
+    nlohmann::json data = json::array();
+    nlohmann::json abscisse = json::array();
+    nlohmann::json ordinate = json::array();
+
+    auto tmp = this->get();
+    for (auto &&it = tmp.begin(); it != tmp.end(); it++) {
+      abscisse.push_back(it->first);
+      ordinate.push_back(it->second);
+    }
+
+    data["id"] = id;
+    data["abscisse"] = abscisse;
+    data["ordinate"] = ordinate;
+
+    return data;
+  }
+
   std::pair<std::string, std::string> lastData;
 
 protected:
