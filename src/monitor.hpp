@@ -24,7 +24,7 @@ namespace rm {
 // =================================================================================================
 class Tic {
 public:
-  Tic(std::string name = "default") : name(name) {}
+  explicit Tic(std::string name = "default") : name(name) {}
   void incr() { ++this->count; }
   void reset() { this->count = 0; }
   const int get() const { return this->count; }
@@ -38,7 +38,7 @@ private:
 class Monitor {
 public:
   Monitor(Database &database, int prefix, char letter = 'a')
-      : database(database), prefix(this->database.buildPrefix(letter, prefix)) {}
+      : letter(letter), database(database), prefix(this->database.buildPrefix(letter, prefix)) {}
 
   // virtual void add(std::string data, int value) = 0;  // Differe in function of update policy
 
