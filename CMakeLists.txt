@@ -95,12 +95,12 @@ if(BUILD_UNIT_TESTS)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit-monitor.cpp
   )
 
-  add_executable(unit_test ${TEST_SOURCES})
-  target_link_libraries(unit_test -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})
-  add_dependencies(unit_test uwebsocket_lib rocksdb_lib)
+  add_executable(unit-test ${TEST_SOURCES})
+  target_link_libraries(unit-test -pthread -lz -luv -lssl -lcrypt cpp_redis ${UWEBSOCKET_LIBS} ${ROCKSDB_LIBS})
+  add_dependencies(unit-test uwebsocket_lib rocksdb_lib)
 
   add_test(NAME "unit_test_default"
-    COMMAND unit_test
+    COMMAND unit-test
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 endif()
