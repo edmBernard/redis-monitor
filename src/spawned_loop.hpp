@@ -28,10 +28,10 @@ inline void checkRedisKeyLength(cpp_redis::client &client, std::vector<std::stri
                                 std::vector<rm::MonitorFrequency> &frequencyMonitors, uWS::Hub *h, int rate) {
 
   while (true) {
+
     std::this_thread::sleep_for(std::chrono::seconds(rate));
+
     std::time_t t = std::time(nullptr);
-    nlohmann::json new_data;
-    new_data["date"] = timeUtils::convertTimeToStr(t);
 
     // Process key length
     for (unsigned int i = 0; i < keys.size(); ++i) {
@@ -46,6 +46,10 @@ inline void checkRedisKeyLength(cpp_redis::client &client, std::vector<std::stri
     for (unsigned int i = 0; i < patterns.size(); ++i) {
       frequencyMonitors[i].add(timeUtils::convertTimeToStr(t));
     }
+
+    // Generate json message send to front
+    nlohmann::json new_data;
+    new_data["date"] = timeUtils::convertTimeToStr(t);
 
     for (unsigned int i = 0; i < keys.size(); ++i) {
       nlohmann::json tmp;

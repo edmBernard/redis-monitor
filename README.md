@@ -35,6 +35,5 @@ Rocks database store all processed data:
 - `c + 000` : counter to track # of pub for the first pattern
 
 TODO:
-- Clean code
 - Clean Test
 - Add 3 letters alias for keys in command line currently key alias in database is its index in command line
