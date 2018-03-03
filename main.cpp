@@ -132,38 +132,39 @@ int main(int argc, char *argv[]) {
     }
 
     // =================================================================================================
-    // Configure RocksDB
-    rm::RocksdbDatabase database(result["rocksdb-path"].as<std::string>());
+    // Configure Database
     // rm::StlDatabase database;
+    rm::RocksdbDatabase database(result["rocksdb-path"].as<std::string>());
+
     std::vector<rm::MonitorLength> lengthMonitors;
     std::vector<rm::MonitorFrequency> frequencyMonitors;
 
+    // =================================================================================================
+    // Create Monitor object for length and frequency
     std::time_t t = std::time(nullptr);
 
     for (unsigned int i = 0; i < keys.size(); ++i) {
-      // create monitor
       lengthMonitors.push_back(rm::MonitorLength(database, i));
       // add null data in graph to separate data from previous session
       lengthMonitors[i].addSeparator(timeUtils::convertTimeToStr(t));
     }
 
     for (unsigned int i = 0; i < patterns.size(); ++i) {
-      // create monitor
       frequencyMonitors.push_back(rm::MonitorFrequency(database, i));
       // add null data in graph to separate data from previous session
       frequencyMonitors[i].addSeparator(timeUtils::convertTimeToStr(t));
     }
 
     // =================================================================================================
-    // Listen Redis keys
+    // Redis client
     cpp_redis::client client;
 
     client.connect(result["host"].as<std::string>(), result["port"].as<int>(),
-                    [](const std::string &host, std::size_t port, cpp_redis::client::connect_state status) {
-                      if (status == cpp_redis::client::connect_state::dropped) {
-                        std::cout << "client disconnected from " << host << ":" << port << std::endl;
-                      }
-                    });
+                   [](const std::string &host, std::size_t port, cpp_redis::client::connect_state status) {
+                     if (status == cpp_redis::client::connect_state::dropped) {
+                       std::cout << "client disconnected from " << host << ":" << port << std::endl;
+                     }
+                   });
 
     client.auth(result["auth"].as<std::string>());
 
@@ -172,11 +173,11 @@ int main(int argc, char *argv[]) {
     cpp_redis::subscriber sub;
 
     sub.connect(result["host"].as<std::string>(), result["port"].as<int>(),
-                 [](const std::string &host, std::size_t port, cpp_redis::subscriber::connect_state status) {
-                   if (status == cpp_redis::subscriber::connect_state::dropped) {
-                     std::cout << "subscriber disconnected from " << host << ":" << port << std::endl;
-                   }
-                 });
+                [](const std::string &host, std::size_t port, cpp_redis::subscriber::connect_state status) {
+                  if (status == cpp_redis::subscriber::connect_state::dropped) {
+                    std::cout << "subscriber disconnected from " << host << ":" << port << std::endl;
+                  }
+                });
 
     sub.auth(result["auth"].as<std::string>());
 
@@ -206,15 +207,19 @@ int main(int argc, char *argv[]) {
                      &frequencyMonitors](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
       // Temp string because regex_match don't allow versatile string get by toString
       std::string url_temp = req.getUrl().toString();
-      // Routing
+
+      // Define routing regex
       std::regex route_static_file("/(static/.*)");
       std::regex route_home("/");
       std::regex route_update_keys("/updatekeys");
       std::regex route_update_patterns("/updatepatterns");
+
       std::smatch pieces_match;
 
+      // =================================================================================================
       // Routing static file
       if (std::regex_match(url_temp, pieces_match, route_static_file)) {
+
         std::ifstream in("../" + pieces_match[1].str(), std::ios::in | std::ios::binary);
         if (in) {
           std::ostringstream contents;
@@ -223,11 +228,14 @@ int main(int argc, char *argv[]) {
           res->end(contents.str().data(), contents.str().length());
         }
 
+        // =================================================================================================
         // Routing home
       } else if (std::regex_match(url_temp, pieces_match, route_home)) {
+
         res->end(rendered.data(), rendered.length());
 
-        // Routing update
+        // =================================================================================================
+        // Routing update keys
       } else if (std::regex_match(url_temp, pieces_match, route_update_keys)) {
 
         json data = json::array();
@@ -240,6 +248,8 @@ int main(int argc, char *argv[]) {
         std::string data_string = data.dump();
         res->end(data_string.data(), data_string.length());
 
+        // =================================================================================================
+        // Routing update patterns
       } else if (std::regex_match(url_temp, pieces_match, route_update_patterns)) {
 
         json data = json::array();
@@ -252,9 +262,10 @@ int main(int argc, char *argv[]) {
         std::string data_string = data.dump();
         res->end(data_string.data(), data_string.length());
 
+        // =================================================================================================
         // Routing Nothing
       } else {
-        // i guess this should be done more gracefully?
+
         res->end(nullptr, 0);
       }
     });
