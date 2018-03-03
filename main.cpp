@@ -20,26 +20,13 @@
 #include "inja.hpp"
 #include "database.hpp"
 #include "monitor.hpp"
+#include "timeUtils.hpp"
 #include <cpp_redis/cpp_redis>
 #include <cxxopts.hpp>
 #include <uWS.h>
 // clang-format on
 
 using json = nlohmann::json;
-
-std::time_t convertStrToTime(std::string stime) {
-  std::tm tm;
-  std::istringstream iss(stime);
-  iss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S"); // or just %T in this case
-  return timegm(&tm);
-}
-
-std::string convertTimeToStr(std::time_t time) {
-  std::tm tm = *std::gmtime(&time);
-  std::stringstream ss;
-  ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
-  return ss.str();
-}
 
 void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> keys, std::vector<std::string> patterns,
                          std::vector<rm::MonitorLength> &lengthMonitors,
@@ -49,12 +36,12 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
     std::this_thread::sleep_for(std::chrono::seconds(rate));
     std::time_t t = std::time(nullptr);
     json new_data;
-    new_data["date"] = convertTimeToStr(t);
+    new_data["date"] = timeUtils::convertTimeToStr(t);
 
     // Process key length
     for (unsigned int i = 0; i < keys.size(); ++i) {
       client->llen(keys[i], [i, keys, &lengthMonitors, t](cpp_redis::reply &reply) {
-        lengthMonitors[i].add(convertTimeToStr(t), std::to_string(reply.as_integer()));
+        lengthMonitors[i].add(timeUtils::convertTimeToStr(t), std::to_string(reply.as_integer()));
       });
     }
 
@@ -62,7 +49,7 @@ void checkRedisKeyLength(cpp_redis::client *client, std::vector<std::string> key
 
     // Process pattern publish
     for (unsigned int i = 0; i < patterns.size(); ++i) {
-      frequencyMonitors[i].add(convertTimeToStr(t));
+      frequencyMonitors[i].add(timeUtils::convertTimeToStr(t));
     }
 
     for (unsigned int i = 0; i < keys.size(); ++i) {
@@ -123,6 +110,7 @@ int main(int argc, char *argv[]) {
     std::cout << "rocksdb-path = " << result["rocksdb-path"].as<std::string>() << std::endl;
 
     std::vector<std::string> keys;
+
     if (result.count("key")) {
       std::cout << "keys = [";
       keys = result["key"].as<std::vector<std::string>>();
@@ -133,6 +121,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::vector<std::string> patterns;
+
     if (result.count("psubscribe")) {
       std::cout << "patterns = [";
       patterns = result["psubscribe"].as<std::vector<std::string>>();
@@ -155,14 +144,14 @@ int main(int argc, char *argv[]) {
       // create monitor
       lengthMonitors.push_back(rm::MonitorLength(database, i));
       // add null data in graph to separate data from previous session
-      lengthMonitors[i].addSeparator(convertTimeToStr(t));
+      lengthMonitors[i].addSeparator(timeUtils::convertTimeToStr(t));
     }
 
     for (unsigned int i = 0; i < patterns.size(); ++i) {
       // create monitor
       frequencyMonitors.push_back(rm::MonitorFrequency(database, i));
       // add null data in graph to separate data from previous session
-      frequencyMonitors[i].addSeparator(convertTimeToStr(t));
+      frequencyMonitors[i].addSeparator(timeUtils::convertTimeToStr(t));
     }
 
     // =================================================================================================
