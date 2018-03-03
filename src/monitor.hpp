@@ -48,7 +48,7 @@ public:
   }
 
   nlohmann::json get_json(std::string id) {
-    nlohmann::json data = json::array();
+    nlohmann::json data;
     nlohmann::json abscisse = json::array();
     nlohmann::json ordinate = json::array();
 
