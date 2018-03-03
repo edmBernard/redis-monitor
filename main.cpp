@@ -169,25 +169,25 @@ int main(int argc, char *argv[]) {
 
     // =================================================================================================
     // Redis subscriber
-    cpp_redis::subscriber *sub = new cpp_redis::subscriber();
+    cpp_redis::subscriber sub;
 
-    sub->connect(result["host"].as<std::string>(), result["port"].as<int>(),
+    sub.connect(result["host"].as<std::string>(), result["port"].as<int>(),
                  [](const std::string &host, std::size_t port, cpp_redis::subscriber::connect_state status) {
                    if (status == cpp_redis::subscriber::connect_state::dropped) {
                      std::cout << "subscriber disconnected from " << host << ":" << port << std::endl;
                    }
                  });
 
-    sub->auth(result["auth"].as<std::string>());
+    sub.auth(result["auth"].as<std::string>());
 
     for (unsigned int i = 0; i < patterns.size(); ++i) {
       // redis pattern subsciption on pubsub we increment counter of specific pattern
-      sub->psubscribe(patterns[i], [i, &frequencyMonitors](const std::string &chan, const std::string &msg) {
+      sub.psubscribe(patterns[i], [i, &frequencyMonitors](const std::string &chan, const std::string &msg) {
         frequencyMonitors[i].incr();
       });
     }
 
-    sub->commit();
+    sub.commit();
 
     // =================================================================================================
     // Inja Template
@@ -284,7 +284,6 @@ int main(int argc, char *argv[]) {
     h.run();
 
     delete client;
-    delete sub;
 
   } catch (const cxxopts::OptionException &e) {
     std::cout << "error parsing options: " << e.what() << std::endl;
