@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
         cxxopts::value<std::string>()->default_value("/tmp/redis_monitor"), "PATH")
       ("update-rate", "update rate in second",
         cxxopts::value<int>()->default_value("1"), "RATE")
-      ("psubscribe", "pattern used to redis pattern subscription",
-        cxxopts::value<std::vector<std::string>>(), "PATTERN")
+      ("s, subscribe", "pattern used to redis pattern subscription",
+        cxxopts::value<std::vector<std::string>>(), "PATTERNS")
       ("k, key", "Keys to monitor",
         cxxopts::value<std::vector<std::string>>(), "KEYS");
     // clang-format on
@@ -80,9 +80,9 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::string> patterns;
 
-    if (result.count("psubscribe")) {
+    if (result.count("subscribe")) {
       std::cout << "patterns = [";
-      patterns = result["psubscribe"].as<std::vector<std::string>>();
+      patterns = result["subscribe"].as<std::vector<std::string>>();
       for (const auto &p : patterns) {
         std::cout << p << ", ";
       }
