@@ -27,12 +27,22 @@ apt-get install libssl-dev
 apt-get install libuv1-dev
 ```
 
+## Usage example:
+
+```bash
+./redis-monitor -k ktoto -k ktata -k ktutu -s "*" -s "ptoto*" -s ptata -s "*tutu"
+```
+
+## Illustration on fake data
+
+![capture](Interface_illustration.png)
+
+
 ## Basic information
 
 Rocks database store all processed data:
 - `k + 000 + YYYY-MM-DD HH:MM:SS` : key length of the first key in command line list
 - `p + 000 + YYYY-MM-DD HH:MM:SS` : # of pub per time step for the first pattern
-- `c + 000` : counter to track # of pub for the first pattern
 
 TODO:
 - Clean Test
