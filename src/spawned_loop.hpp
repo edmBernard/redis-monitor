@@ -24,7 +24,7 @@
 // clang-format on
 
 inline void checkRedisKeyLength(cpp_redis::client &client, std::vector<std::string> keys,
-                                std::vector<std::string> patterns, std::vector<rm::MonitorLength> &lengthMonitors,
+                                std::vector<std::string> patterns, bool use_websocket, std::vector<rm::MonitorLength> &lengthMonitors,
                                 std::vector<rm::MonitorFrequency> &frequencyMonitors, uWS::Hub *h, int rate) {
 
   while (true) {
@@ -47,26 +47,28 @@ inline void checkRedisKeyLength(cpp_redis::client &client, std::vector<std::stri
       frequencyMonitors[i].add(timeUtils::convertTimeToStr(t));
     }
 
-    // Generate json message send to front
-    nlohmann::json new_data;
-    new_data["date"] = timeUtils::convertTimeToStr(t);
+    if (use_websocket) {
+      // Generate json message send to front
+      nlohmann::json new_data;
+      new_data["date"] = timeUtils::convertTimeToStr(t);
 
-    for (unsigned int i = 0; i < keys.size(); ++i) {
-      nlohmann::json tmp;
-      tmp["id"] = keys[i];
-      tmp["value"] = lengthMonitors[i].lastData.second;
-      new_data["keys"].push_back(tmp);
+      for (unsigned int i = 0; i < keys.size(); ++i) {
+        nlohmann::json tmp;
+        tmp["id"] = keys[i];
+        tmp["value"] = lengthMonitors[i].lastData.second;
+        new_data["keys"].push_back(tmp);
+      }
+
+      for (unsigned int i = 0; i < patterns.size(); ++i) {
+        nlohmann::json tmp;
+        tmp["id"] = patterns[i];
+        tmp["value"] = frequencyMonitors[i].lastData.second;
+        new_data["patterns"].push_back(tmp);
+      }
+
+      std::string data_string = new_data.dump();
+      h->getDefaultGroup<uWS::SERVER>().broadcast(data_string.data(), data_string.length(), uWS::TEXT);
     }
-
-    for (unsigned int i = 0; i < patterns.size(); ++i) {
-      nlohmann::json tmp;
-      tmp["id"] = patterns[i];
-      tmp["value"] = frequencyMonitors[i].lastData.second;
-      new_data["patterns"].push_back(tmp);
-    }
-
-    std::string data_string = new_data.dump();
-    h->getDefaultGroup<uWS::SERVER>().broadcast(data_string.data(), data_string.length(), uWS::TEXT);
   }
 }
 

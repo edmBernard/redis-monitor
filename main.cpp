@@ -48,6 +48,8 @@ int main(int argc, char *argv[]) {
         cxxopts::value<std::string>()->default_value("/tmp/redis_monitor"), "PATH")
       ("update-rate", "update rate in second",
         cxxopts::value<int>()->default_value("1"), "RATE")
+      ("no-websocket", "Disable websocket updating front",
+        cxxopts::value<bool>()->default_value("false"))
       ("s, subscribe", "pattern used to redis pattern subscription",
         cxxopts::value<std::vector<std::string>>(), "PATTERNS")
       ("k, key", "Keys to monitor",
@@ -66,6 +68,7 @@ int main(int argc, char *argv[]) {
     std::cout << "auth = " << result["auth"].as<std::string>() << std::endl;
     std::cout << "update-rate = " << result["update-rate"].as<int>() << std::endl;
     std::cout << "rocksdb-path = " << result["rocksdb-path"].as<std::string>() << std::endl;
+    std::cout << "no-websocket = " << result["no-websocket"].as<bool>() << std::endl;
 
     std::vector<std::string> keys;
 
@@ -239,7 +242,7 @@ int main(int argc, char *argv[]) {
     });
 
     // Spawn thread to listen redis periodically, update publish speed and send websocket to client
-    std::thread checkingKey(checkRedisKeyLength, std::ref(client), keys, patterns, std::ref(lengthMonitors),
+    std::thread checkingKey(checkRedisKeyLength, std::ref(client), keys, patterns, !result["no-websocket"].as<bool>(), std::ref(lengthMonitors),
                             std::ref(frequencyMonitors), &h, result["update-rate"].as<int>());
 
     h.getDefaultGroup<uWS::SERVER>().startAutoPing(30000);
